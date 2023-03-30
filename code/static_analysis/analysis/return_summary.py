@@ -33,7 +33,7 @@ import traceback
 
 # Improvements: Probably we may need to field sensitive
 CONSTANT_TYPES = ['int', 'str', 'Constant']
-VARIBLE_TYPES = ['StateVariableSolc', 'LocalVariableSolc']
+VARIBLE_TYPES = ['StateVariable', 'LocalVariable']
 SOLIDITY_VARS = ['SolidityVariableComposed', 'SolidityVariable']
 
 def process_state_variable_return(log, vrg, return_value, cfg_obj):
@@ -97,7 +97,7 @@ def process_ref_variable_return(log, vrg, parameters, instruction, return_value,
     origin_var = get_origin_variable_from_refvariable(log, vrg, None, return_value, cfg_obj, 'R')
     origin_var = replace_state_var_with_index_node(origin_var, return_value, vrg)
 
-    if type(origin_var).__name__ == 'LocalVariableSolc':
+    if type(origin_var).__name__ == 'LocalVariable':
         taint_flag = is_tainted(log, origin_var, cfg_obj, cfg_obj._function.contract)
         
         if origin_var in parameters and taint_flag:
@@ -187,13 +187,13 @@ def generate_return_summary(log, vrg, cfg_obj, parameters, return_values):
                 
                 process_temp_variable_return(log, vrg, parameters, return_instr, value, cfg_obj)
             
-            elif type(value).__name__ == 'LocalVariableSolc':
+            elif type(value).__name__ == 'LocalVariable':
                 process_local_variable_return(log, vrg, parameters, return_instr, value, cfg_obj)
             
             elif type(value).__name__ == 'ReferenceVariable':
                 process_ref_variable_return(log, vrg, parameters, return_instr, value, cfg_obj)
             
-            elif type(value).__name__ == 'StateVariableSolc':
+            elif type(value).__name__ == 'StateVariable':
                 process_state_variable_return(log, vrg, value, cfg_obj)
             
             elif type(value).__name__ == 'SolidityVariable' or type(value).__name__ == 'SolidityVariableComposed':

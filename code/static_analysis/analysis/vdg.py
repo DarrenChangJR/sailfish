@@ -107,7 +107,7 @@ class VDG:
                 value_node = ValueNode(varnode, instr_block, assigned_value, "=")
                 
                 '''
-                if type(assigned_value).__name__ == 'LocalVariableSolc':
+                if type(assigned_value).__name__ == 'LocalVariable':
                     sdg_obj = self.instr_block_to_sdg_obj[instr_block]
                     self.analyze_use_def(assigned_value, sdg_obj)
                 

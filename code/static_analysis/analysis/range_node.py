@@ -338,7 +338,7 @@ class RangeNode:
                         array_base = self.generate_ir_on_sep(str(array_base), ".")
                     
                     array_index = self.parse_value(i + 1, value, bracket_indices[i], bracket_indices)
-                    refvar = self.generate_referncevariable_ir(array_base, array_index, '')
+                    refvar = self.generate_referencevariable_ir(array_base, array_index, '')
                     i = bracket_indices[i] + 1
                 
                 elif value[i] == "." and "[" not in value[i:end]:
@@ -384,7 +384,7 @@ class RangeNode:
         
         return index_array
                 
-    def generate_referncevariable_ir(self, lvar, rvar_1, rvar_2):
+    def generate_referencevariable_ir(self, lvar, rvar_1, rvar_2):
         refvar = str(ReferenceVariable(""))
         if "." in rvar_1 and rvar_1 not in solidity_special_vars:
             rvar_1 = self.generate_ir_on_sep(rvar_1, ".")

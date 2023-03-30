@@ -747,7 +747,7 @@ def generate_composed_sdg(slither_obj, generated_sdg, vrg, graph_dir, sdg_object
     functions_to_be_analyzed = {}
 
     for function in sdg_objects.keys():
-        if type(function).__name__ == 'ModifierSolc':
+        if type(function).__name__ == 'Modifier':
             continue
 
         sdg_obj = sdg_objects[function]
@@ -804,7 +804,7 @@ def analyze_external_call(sdg_obj, vrg_obj, function, owner_only_vars, blacklist
 
 def analyze_call_destination(sdg_obj, vrg_obj, ir_instr, function, owner_only_vars, blacklisted_functions):
     call_destination = ir_instr.destination
-    if type(call_destination).__name__ == 'StateVariableSolc':
+    if type(call_destination).__name__ == 'StateVariable':
         state_var_obj = SDG.map_svars_to_sobj[call_destination]
 
         if state_var_obj in owner_only_vars:
@@ -823,7 +823,7 @@ def analyze_call_destination(sdg_obj, vrg_obj, ir_instr, function, owner_only_va
             non_tainted = False
 
             for var in depentdent_vars:
-                if type(var).__name__ == 'StateVariableSolc':
+                if type(var).__name__ == 'StateVariable':
                     non_tainted = True
                     state_var_obj = SDG.map_svars_to_sobj[var]
 
@@ -864,7 +864,7 @@ def analyze_lowlevelcall_gas(sdg_obj, vrg_obj, ir_instr, function, blacklisted_f
                 sdg_obj._ext_calls[ir_instr] = True
 
             '''
-            elif type(call_gas).__name__ == 'StateVariableSolc':
+            elif type(call_gas).__name__ == 'StateVariable':
                 svar_obj = SDG.map_svars_to_sobj[call_gas]
                 writing_functions = vrg_obj._state_var_written[svar_obj]
 
@@ -971,7 +971,7 @@ def count_checks_on_svars(slither_obj, callgraph):
 
             for internal_call in internal_calls:
                 if type(internal_call).__name__ != 'SolidityFunction' and type(
-                        internal_call).__name__ != 'ModifierSolc':
+                        internal_call).__name__ != 'Modifier':
                     if len(node.local_variables_read) == 0:
                         if (internal_call.contract, internal_call) not in public_functions:
                             public_functions.append((internal_call.contract, internal_call))
@@ -1027,7 +1027,7 @@ def process_modfiers(slither_obj, graph_dir):
 def get_child_contracts(slither_obj):
     child_contracts = []
     for contract in slither_obj.contracts:
-        if len(contract.derived_contracts) == 0 and contract.fullyImplemented is True and contract.contract_kind != 'library':
+        if len(contract.derived_contracts) == 0 and contract.is_fully_implemented is True and contract.contract_kind != 'library':
             child_contracts.append(contract)
 
     child_contracts = list(set(child_contracts))

@@ -492,7 +492,7 @@ def get_type_information(s_var, log):
         if type(var_type.type).__name__ == 'StructureSolc':
             type_info.append(str(var_type.type.name))
 
-        elif type(var_type.type).__name__ == 'ContractSolc04':
+        elif type(var_type.type).__name__ == 'Contract':
             type_info.append('address')
 
         elif type(var_type.type).__name__ == 'Enum':
@@ -640,7 +640,7 @@ def get_localvar_type(local_var, log):
         type_info = get_localvar_type(local_var.type, log)
 
     elif type(local_var.type).__name__ == 'UserDefinedType':
-        if type(local_var.type.type).__name__ == 'ContractSolc04':
+        if type(local_var.type.type).__name__ == 'Contract':
             type_info = 'integer'
 
         elif type(local_var.type.type).__name__ == 'StructureSolc':
@@ -781,7 +781,7 @@ def parse_reference_variable_names(instructions, log):
     str_instructions = []
     for instr in instructions:
         if type(instr).__name__ in external_calls and hasattr(instr, 'lvalue') and instr.lvalue is not None:
-            if type(instr.lvalue.type).__name__ == 'UserDefinedType' and type(instr.lvalue.type.type).__name__ == 'ContractSolc04':
+            if type(instr.lvalue.type).__name__ == 'UserDefinedType' and type(instr.lvalue.type.type).__name__ == 'Contract':
                 instr.lvalue.set_type(int_type)
 
         str_instr = create_new_datastructure(instr)
@@ -796,7 +796,7 @@ def parse_reference_variable_names(instructions, log):
         elif type(instr).__name__ == 'Member':
             var_left = instr.variable_left
 
-            if type(var_left).__name__ == 'ContractSolc04':
+            if type(var_left).__name__ == 'Contract':
                 str_instr = str(instr.lvalue) + " -> " + str(instr.variable_right)
 
         elif type(instr).__name__ == 'Unpack':
@@ -810,7 +810,7 @@ def parse_reference_variable_names(instructions, log):
 
                 elif type(index_type).__name__ == 'UserDefinedType':
 
-                    if type(index_type.type).__name__ == 'ContractSolc04':
+                    if type(index_type.type).__name__ == 'Contract':
                         str_instr = str(instr.lvalue) + " := " + "NEW_VAL " + "integer"
 
                     elif type(index_type.type).__name__ == 'StructureSolc':
@@ -997,7 +997,7 @@ def output_tod_amount_or_receiver_paths(slither_obj, file_n, result_dir, log, gl
 
         locals_undeclared = []
 
-        if type(node._instructions[-1]).__name__ == 'NodeSolc' and node._instructions[-1].type == 0x0 and node._is_root == True:
+        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == 0x0 and node._is_root == True:
             if path_graph.nodes[node]['function_type'] == 'P':
                 locals_undeclared = ICFG.locals_to_declare[primary_function]
 
@@ -1019,7 +1019,7 @@ def output_tod_amount_or_receiver_paths(slither_obj, file_n, result_dir, log, gl
                 json_block_dict['instructions'].append(var_creation_instr)
 
             elif type(local_d.type).__name__ == 'UserDefinedType':
-                if type(local_d.type.type).__name__ == 'ContractSolc04':
+                if type(local_d.type.type).__name__ == 'Contract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'integer'
                     json_block_dict['instructions'].append(var_creation_instr)
 
@@ -1082,7 +1082,7 @@ def output_tod_amount_or_receiver_paths(slither_obj, file_n, result_dir, log, gl
 
                         else:
                             if type(lvalue.type).__name__ == 'UserDefinedType':
-                                if type(lvalue.type.type).__name__ == 'ContractSolc04':
+                                if type(lvalue.type.type).__name__ == 'Contract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + "integer"
 
                                 elif type(lvalue.type.type).__name__ == 'StructureSolc':
@@ -1219,7 +1219,7 @@ def output_tod_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
 
         locals_undeclared = []
 
-        if type(node._instructions[-1]).__name__ == 'NodeSolc' and node._instructions[-1].type == 0x0 and node._is_root == True:
+        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == 0x0 and node._is_root == True:
             if path_graph.nodes[node]['function_type'] == 'P':
                 locals_undeclared = ICFG.locals_to_declare[primary_function]
 
@@ -1239,7 +1239,7 @@ def output_tod_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
                 json_block_dict['instructions'].append(var_creation_instr)
 
             elif type(local_d.type).__name__ == 'UserDefinedType':
-                if type(local_d.type.type).__name__ == 'ContractSolc04':
+                if type(local_d.type.type).__name__ == 'Contract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'integer'
                     json_block_dict['instructions'].append(var_creation_instr)
 
@@ -1302,7 +1302,7 @@ def output_tod_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
 
                         else:
                             if type(lvalue.type).__name__ == 'UserDefinedType':
-                                if type(lvalue.type.type).__name__ == 'ContractSolc04':
+                                if type(lvalue.type.type).__name__ == 'Contract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + "integer"
 
                                 elif type(lvalue.type.type).__name__ == 'StructureSolc':
@@ -1467,7 +1467,7 @@ def output_dao_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
 
         locals_undeclared = []
 
-        if type(node._instructions[-1]).__name__ == 'NodeSolc' and node._instructions[-1].type == 0x0 and node._is_root == True:
+        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == 0x0 and node._is_root == True:
             if path_graph.nodes[node]['function_type'] == 'P':
                 locals_undeclared = ICFG.locals_to_declare[primary_function]
 
@@ -1484,7 +1484,7 @@ def output_dao_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
                 json_block_dict['instructions'].append(var_creation_instr)
 
             elif type(local_d.type).__name__ == 'UserDefinedType':
-                if type(local_d.type.type).__name__ == 'ContractSolc04':
+                if type(local_d.type.type).__name__ == 'Contract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'integer'
                     json_block_dict['instructions'].append(var_creation_instr)
 
@@ -1544,7 +1544,7 @@ def output_dao_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
 
                         else:
                             if type(lvalue.type).__name__ == 'UserDefinedType':
-                                if type(lvalue.type.type).__name__ == 'ContractSolc04':
+                                if type(lvalue.type.type).__name__ == 'Contract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + "integer"
 
                                 elif type(lvalue.type.type).__name__ == 'StructureSolc':

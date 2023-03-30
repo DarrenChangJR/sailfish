@@ -196,7 +196,7 @@ class CFG:
         for ir_call in modifier_ir_calls:
             modifier = ir_call.function
 
-            if type(modifier).__name__ == 'FunctionSolc' and modifier.is_constructor is False:
+            if type(modifier).__name__ == 'FunctionContract' and modifier.is_constructor is False:
                 continue
 
             if modifier.is_constructor is True:
@@ -303,7 +303,7 @@ class CFG:
                 last_instruction = basic_block._instructions[-1]
 
                 
-                if type(last_instruction).__name__ == 'NodeSolc' and last_instruction.type == 0x0 and composed_cfg.in_degree(basic_block) == 0:
+                if type(last_instruction).__name__ == 'Node' and last_instruction.type == 0x0 and composed_cfg.in_degree(basic_block) == 0:
                     new_modifier = False
                     
                     if to_inlines != None:
@@ -337,14 +337,14 @@ class CFG:
                     self._condition_to_sons[basic_block]['true'] = next_blocks[0]
                     self._condition_to_sons[basic_block]['false'] = next_blocks[1]
                 
-                if type(last_instruction).__name__ == 'NodeSolc' and (last_instruction.type == 0x50 or last_instruction.type == 0x52):
+                if type(last_instruction).__name__ == 'Node' and (last_instruction.type == 0x50 or last_instruction.type == 0x52):
                     if self._match_ENDIF_to_IF.get(basic_block) == None:
                         assert len(end_if_stack) != 0, "Debug, this can not happen"
                         
                         if_basic_block = end_if_stack.pop()
                         self._match_ENDIF_to_IF[basic_block] = if_basic_block
                 
-                if type(last_instruction).__name__ == 'NodeSolc' and last_instruction.type == 0x40:
+                if type(last_instruction).__name__ == 'Node' and last_instruction.type == 0x40:
                     if to_inlines == None:
                         to_inlines = []
                     to_inlines.append((basic_block, modifier))
@@ -391,10 +391,10 @@ class CFG:
             modifier = None
 
             for argument in arguments:
-                if type(argument).__name__ == 'FunctionSolc':
+                if type(argument).__name__ == 'FunctionContract':
                     function_calls.append(argument)
 
-                if type(argument).__name__ == 'ModifierSolc':
+                if type(argument).__name__ == 'Modifier':
                     modifier = argument
 
             if modifier != None:
@@ -468,7 +468,7 @@ class CFG:
                         ir = successor._instructions[-1]
                         pre_dominator = node
                         
-                        if type(ir).__name__ == 'NodeSolc':
+                        if type(ir).__name__ == 'Node':
                             
                             if ir.type == 0x50:
                                 if self._match_ENDIF_to_IF.get(successor) != None:
@@ -502,7 +502,7 @@ class CFG:
                         ir = successor._instructions[-1]
                         pre_dominator = node
                         
-                        if type(ir).__name__ == 'NodeSolc':
+                        if type(ir).__name__ == 'Node':
                             if ir.type == 0x50:
                                 predecessors = list(self._cfg.predecessors(successor))
                                 if self._match_ENDIF_to_IF.get(successor) != None:
@@ -571,14 +571,14 @@ class CFG:
             return False
     
     def is_lvalue_storage(self, lvalue):
-        if type(lvalue).__name__ == 'StateVariableSolc':
+        if type(lvalue).__name__ == 'StateVariable':
             return True
         
         else:
             if type(lvalue).__name__ == 'ReferenceVariable':
                 origin_var = lvalue.points_to_origin
                 
-                if type(origin_var).__name__ == 'StateVariableSolc':
+                if type(origin_var).__name__ == 'StateVariable':
                     return True
                 else:
                     return False
@@ -635,7 +635,7 @@ class CFG:
                     if self.is_ir_call(ir) or type(ir).__name__ == 'NewContract':
                         if type(ir).__name__ == 'InternalCall' or type(ir).__name__ == 'HighLevelCall' or type(ir).__name__ == 'LibraryCall':
                             self._ircall_to_bb[ir] = basic_block
-                            if type(ir.function).__name__ == 'ModifierSolc':
+                            if type(ir.function).__name__ == 'Modifier':
                                 if self._modifier_call_bb.get(ir) == None:
                                     self._modifier_call_bb[ir] = []
 

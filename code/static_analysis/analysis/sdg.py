@@ -38,7 +38,7 @@ The following statements are considered modifying the state:
 
 '''
 
-TEMPVAR_TYPES = ['LocalVariableSolc', 'TemporaryVariable']
+TEMPVAR_TYPES = ['LocalVariable', 'TemporaryVariable']
 class SDG:
     """
         Given an ICFG this class first builds a simplified icfg containting only Conditional, SSTORE, Lowlevel Call and High level 
@@ -130,13 +130,13 @@ class SDG:
     def get_used_vars(self, target_node):
         var_list = []                                                                                                                                                                                    
         for dominator in target_node.dominators:                                                                                                                                                          
-	        for ir in dominator.irs:                                                                                                                                                                      
-		        var_list.extend(ir.used)
+            for ir in dominator.irs:                                                                                                                                                                      
+                var_list.extend(ir.used)
         
         used_var = []
         for var in var_list:
-	        if type(var).__name__ != 'Constant':
-		        used_var.append(var)
+            if type(var).__name__ != 'Constant':
+                used_var.append(var)
         
         return used_var
     
@@ -145,7 +145,7 @@ class SDG:
     def find_dependent_statevars(self, dep_vars):
         state_var_dep_list = []
         for var in dep_vars:
-            if type(var).__name__ == 'StateVariableSolc':
+            if type(var).__name__ == 'StateVariable':
                 state_var_dep_list.append(var)
 
         return state_var_dep_list        
@@ -172,7 +172,7 @@ class SDG:
                 # variable is a state variable itself, we output that and done
                 # If the left variable is not a state variable, we recursively call get_origin_var
                 if type(instr).__name__ == 'Index':
-                    if type(instr.variable_left).__name__ == 'StateVariableSolc':
+                    if type(instr.variable_left).__name__ == 'StateVariable':
                         lvalue = instr.lvalue
                         s_var_obj = SDG.map_svars_to_sobj[instr.variable_left]
                         self._ref_to_state[lvalue] = s_var_obj
@@ -199,13 +199,13 @@ class SDG:
                     lvalue = instr.lvalue
 
                     if instr.lvalue not in self._ref_to_state.keys():
-                        if type(var_left).__name__ == 'StateVariableSolc':
+                        if type(var_left).__name__ == 'StateVariable':
                             origin_var = SDG.map_svars_to_sobj[instr.variable_left]
                         
                         elif type(var_left).__name__ == 'Enum':
                             origin_var = var_left
                         
-                        elif type(var_left).__name__ == 'ContractSolc04':
+                        elif type(var_left).__name__ == 'Contract':
                             origin_var = var_left 
 
                         elif type(var_left).__name__ == 'Contract':
@@ -256,7 +256,7 @@ class SDG:
         for dep_var in dep_vars:
             if type(dep_var).__name__ == 'ReferenceVariable':
                 
-                if dep_var not in CFG.member_ir_var_left and type(dep_var.points_to_origin).__name__ != 'LocalVariableSolc':
+                if dep_var not in CFG.member_ir_var_left and type(dep_var.points_to_origin).__name__ != 'LocalVariable':
                     origin_var = self.get_origin_state_var(dep_var)
 
                     if origin_var == None:
@@ -297,7 +297,7 @@ class SDG:
         s_var_list = []
         
         # If the value being written is a state variable, get the state var object
-        if type(state_var_w).__name__ == 'StateVariableSolc':
+        if type(state_var_w).__name__ == 'StateVariable':
             s_var_list.append(SDG.map_svars_to_sobj[state_var_w])
         
         # If the value being written is a reference variable
@@ -309,7 +309,7 @@ class SDG:
         # the instr block to the storage variable
         for var_w in s_var_list:
 
-            if type(var_w).__name__ == 'StateVariableSolc':
+            if type(var_w).__name__ == 'StateVariable':
                 var_w = SDG.map_svars_to_sobj[var_w]
             
             # Adds only edge if the storage variable already exists
@@ -412,7 +412,7 @@ class SDG:
 
                 for s_var in common_vars:
 
-                    if type(s_var).__name__ == 'StateVariableSolc':
+                    if type(s_var).__name__ == 'StateVariable':
                         s_var = SDG.map_svars_to_sobj[s_var]
                     
                     if s_var not in vars_used_upto:
@@ -459,7 +459,7 @@ class SDG:
                 #    for ir in node.irs:
                 #        arguments.extend(ir.used)
 
-                if type(function).__name__ == "ModifierSolc":
+                if type(function).__name__ == "Modifier":
                     is_modifier = True
 
                 self.add_data_flow_edge(node.function.contract, node.function, graph, instr_block, call_context, arguments, is_modifier, 'N')
@@ -482,7 +482,7 @@ class SDG:
             if type(ir_instr).__name__ == 'SolidityCall':
                 
                 if ir_instr.function.name.startswith('require') or ir_instr.function.name.startswith('assert'):
-                    if type(function).__name__ == "ModifierSolc":
+                    if type(function).__name__ == "Modifier":
                         is_modifier = True
 
                 arguments = []
@@ -498,7 +498,7 @@ class SDG:
                 lvalue = ir_instr.lvalue
                 variable_written = None
                 
-                if type(lvalue).__name__ == 'ReferenceVariable' or  type(lvalue).__name__ == 'StateVariableSolc':
+                if type(lvalue).__name__ == 'ReferenceVariable' or  type(lvalue).__name__ == 'StateVariable':
                     variable_written = self.add_store_edge(contract, graph, instr_block, lvalue)
                 
                 if hasattr(ir_instr, 'rvalue'):
@@ -515,13 +515,13 @@ class SDG:
             if type(ir_instr).__name__ == 'Delete':
                 lvalue = ir_instr.lvalue
 
-                if type(lvalue).__name__ == 'ReferenceVariable' or type(lvalue).__name__ == 'StateVariableSolc':
+                if type(lvalue).__name__ == 'ReferenceVariable' or type(lvalue).__name__ == 'StateVariable':
                     variable_written = self.add_store_edge(contract, graph, instr_block, lvalue)
 
             if type(ir_instr).__name__ == 'Push':
                 lvalue = ir_instr.lvalue
                 variable_written = None
-                if type(lvalue).__name__ == 'ReferenceVariable' or type(lvalue).__name__ == 'StateVariableSolc':
+                if type(lvalue).__name__ == 'ReferenceVariable' or type(lvalue).__name__ == 'StateVariable':
                     variable_written = self.add_store_edge(contract, graph, instr_block, lvalue)
 
                 arguments = [ir_instr.value]
@@ -695,7 +695,7 @@ class SDG:
             if type(lvalue).__name__ == 'ReferenceVariable':
                 lvalue = lvalue.points_to_origin
             
-            if type(lvalue).__name__ == 'StateVariableSolc':
+            if type(lvalue).__name__ == 'StateVariable':
                 return True
             
             else:
@@ -707,7 +707,7 @@ class SDG:
             if type(lvalue).__name__ == 'ReferenceVariable':
                 lvalue = lvalue.points_to_origin
 
-            if type(lvalue).__name__ == 'StateVariableSolc':
+            if type(lvalue).__name__ == 'StateVariable':
                 return True
 
             else:
@@ -726,7 +726,7 @@ class SDG:
             dependent_vars = list(set(dependent_vars))
             dependent_vars.append(target)
 
-        elif type(target).__name__ == 'LocalVariableSolc' or type(target).__name__ == 'TemporaryVariable'\
+        elif type(target).__name__ == 'LocalVariable' or type(target).__name__ == 'TemporaryVariable'\
                 or type(target).__name__ == 'LocalVariableInitFromTupleSolc' or type(target).__name__ == 'TupleVariable':
 
             if CFG.lvalue_vars.get(target) is not None:
@@ -838,11 +838,10 @@ class SDG:
         state_vars = {}
         
         for instr in basic_block._instructions:
-            if type(instr).__name__ != 'NodeSolc':
+            if type(instr).__name__ != 'Node':
                 vars_used = instr.used
                 for var_used in vars_used:
-                    
-                    if type(var_used).__name__ == 'StateVariableSolc':
+                    if type(var_used).__name__ == 'StateVariable':
                         var_used = SDG.map_svars_to_sobj[var_used]
                         if instr not in state_vars.keys():
                             state_vars[instr] = []
@@ -850,7 +849,7 @@ class SDG:
                         state_vars[instr].append(var_used)
 
                     if type(var_used).__name__ == 'ReferenceVariable':
-                        if var_used not in CFG.member_ir_var_left and type(var_used.points_to_origin).__name__ != 'LocalVariableSolc':
+                        if var_used not in CFG.member_ir_var_left and type(var_used.points_to_origin).__name__ != 'LocalVariable':
                             origin_var = self.get_origin_state_var(var_used)
 
                             if origin_var == None:

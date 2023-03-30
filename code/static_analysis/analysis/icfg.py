@@ -147,15 +147,15 @@ class ICFG:
             for instr in node._instructions:
                 if hasattr(instr, 'lvalue'):
                     lvalue = instr.lvalue
-                    if type(lvalue).__name__ == 'LocalVariableSolc':
+                    if type(lvalue).__name__ == 'LocalVariable':
                         lvalue_locals.append(lvalue)
                 
                 if hasattr(instr, 'rvalue'):
                     rvalue = instr.rvalue
-                    if type(rvalue).__name__ == 'LocalVariableSolc':
+                    if type(rvalue).__name__ == 'LocalVariable':
                         rvalue_locals.append(rvalue)
                 
-                if not hasattr(instr, 'rvalue') and not type(instr).__name__ == 'NodeSolc':
+                if not hasattr(instr, 'rvalue') and not type(instr).__name__ == 'Node':
                     vars_used = instr.used
 
                     for var_used in vars_used:
@@ -163,10 +163,10 @@ class ICFG:
                             if var_used == instr.lvalue:
                                 continue
                             
-                            elif type(var_used).__name__ == 'LocalVariableSolc':
+                            elif type(var_used).__name__ == 'LocalVariable':
                                 rvalue_locals.append(var_used)
                         else:
-                            if type(var_used).__name__ == 'LocalVariableSolc':
+                            if type(var_used).__name__ == 'LocalVariable':
                                 rvalue_locals.append(var_used)
 
         ICFG.locals_to_declare[self._function] = list(set(rvalue_locals))
@@ -257,7 +257,7 @@ class ICFG:
         
         for node in nodes:
             instr_type = node._instructions[0]
-            if type(instr_type).__name__ == 'NodeSolc' and instr_type.type == 0x0:
+            if type(instr_type).__name__ == 'Node' and instr_type.type == 0x0:
                 root_node = node
         return root_node
 
@@ -306,7 +306,7 @@ class ICFG:
                 function = last_instruction.function
                 contract = function.contract
 
-                if type(function).__name__ == 'FunctionSolc':
+                if type(function).__name__ == 'FunctionContract':
                     # If the call destination is an external contract, we do not do anything
                     if contract not in self._slither.contracts:
                         continue
@@ -320,7 +320,7 @@ class ICFG:
                         
                         partial_icfg = self.build_icfg(contract, function, copy_call_context, result_dir)
 
-                        if type(partial_icfg).__name__ == 'FunctionSolc':
+                        if type(partial_icfg).__name__ == 'FunctionContract':
                             basic_block._is_recursive_call = function
                             basic_block._label = ICFG.uid
                             self._recursion_present = True

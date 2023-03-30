@@ -45,7 +45,7 @@ int_type = ElementaryType('int')
 TUPLE_TYPES = []
 
 CONSTANT_TYPES = ['int', 'str', 'Constant']
-VARIBLE_TYPES = ['StateVariableSolc', 'LocalVariableSolc']
+VARIBLE_TYPES = ['StateVariable', 'LocalVariable']
 SOLIDITY_VARS = ['SolidityVariableComposed', 'SolidityVariable']
 JOINOP = [BinaryType.OROR, BinaryType.ANDAND]
 ARITHMETICOP = [BinaryType.POWER, BinaryType.MULTIPLICATION, BinaryType.DIVISION, BinaryType.MODULO, BinaryType.ADDITION, BinaryType.SUBTRACTION, 
@@ -61,7 +61,7 @@ slithir_operations = ["assignment", "balance", "binary ", "call.py", "condition"
 
 
 
-# This function returns the corresponding state var object given StateVariableSolc
+# This function returns the corresponding state var object given StateVariable
 def get_state_var_obj(log, var):
     if var in SDG.map_svars_to_sobj.keys():
         return SDG.map_svars_to_sobj[var]
@@ -169,7 +169,7 @@ def process_left_or_right_variable(log, vrg, variable, cfg_obj, call_type, instr
             res_var = rvar
     
     else:
-        if type(variable).__name__ == 'StateVariableSolc':
+        if type(variable).__name__ == 'StateVariable':
             res_var = get_state_var_obj(log, variable)
             
             if res_var in vrg._constant_state_vars.keys():
@@ -181,7 +181,7 @@ def process_left_or_right_variable(log, vrg, variable, cfg_obj, call_type, instr
         elif type(variable).__name__ == 'Constant':
             res_var = variable
 
-        elif type(variable).__name__ == 'LocalVariableSolc':
+        elif type(variable).__name__ == 'LocalVariable':
             
             if variable in parameters:
                 if is_tainted(log, variable, cfg_obj, cfg_obj._function._contract):
@@ -1145,7 +1145,7 @@ def replace_state_var_with_index_node(origin_var, ref_var, vrg):
     return origin_var
 
 def process_indexir_rvalue(log, vrg, instr, variable, cfg_obj, call_type, parent=None):
-    if type(variable).__name__ == 'StateVariableSolc':
+    if type(variable).__name__ == 'StateVariable':
         s_var_obj = get_state_var_obj(log, variable)
         return s_var_obj
     
@@ -1165,7 +1165,7 @@ def process_indexir_rvalue(log, vrg, instr, variable, cfg_obj, call_type, parent
 
     #: need to tackele elegantly, for now for local variable
     # we are just returning U
-    elif type(variable).__name__ == 'LocalVariableSolc':
+    elif type(variable).__name__ == 'LocalVariable':
         constant = Constant('U')
         return constant
     
@@ -1190,7 +1190,7 @@ def process_index_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=None)
     # Next, for right variable we need to know what is that and accordingly we store that 
     # in a index node 
     if lvalue not in vrg._ref_to_state.keys():
-        if type(variable_left).__name__ == 'StateVariableSolc':
+        if type(variable_left).__name__ == 'StateVariable':
             left_value = get_state_var_obj(log, variable_left)
             right_value = process_indexir_rvalue(log, vrg, instr, variable_right, cfg_obj, call_type, parent)
             index_node = IndexNode(left_value, right_value, None)
@@ -1198,7 +1198,7 @@ def process_index_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=None)
             vrg._ref_to_state[lvalue] = left_value
             vrg._reference_variables[lvalue] = index_node
         
-        elif type(variable_left).__name__ == 'LocalVariableSolc':
+        elif type(variable_left).__name__ == 'LocalVariable':
             # if location storage it means the local variable is actually storage pointer
             # Hence we should get the origin state variable
             if variable_left.location == 'storage':
@@ -1230,7 +1230,7 @@ def process_index_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=None)
             lvar, rvar, type_str = process_temporary_variable(log, vrg, variable_left, cfg_obj, call_type, [])
             state_var = lvar
             
-            if type(state_var).__name__ == 'StateVariableSolc':
+            if type(state_var).__name__ == 'StateVariable':
                 left_value = get_state_var_obj(log, state_var)
             
             elif isinstance(state_var, StateVar) or isinstance(state_var, VarNode):
@@ -1314,7 +1314,7 @@ def process_member_ir(log, vrg, instr, variable, cfg_obj, call_type, parent):
     lvalue = instr.lvalue
 
     if lvalue not in vrg._ref_to_state.keys():
-        if type(var_left).__name__ == 'StateVariableSolc':
+        if type(var_left).__name__ == 'StateVariable':
             origin_var = get_state_var_obj(log, var_left)
             var_node = create_var_node(log, instr, origin_var, struct_member)
             vrg._ref_to_state[lvalue] = var_node
@@ -1322,7 +1322,7 @@ def process_member_ir(log, vrg, instr, variable, cfg_obj, call_type, parent):
             index_node = IndexNode(origin_var, None, struct_member)
             vrg._reference_variables[lvalue] = index_node
         
-        elif type(var_left).__name__ == 'LocalVariableSolc':
+        elif type(var_left).__name__ == 'LocalVariable':
             if var_left.location == 'storage' or (call_type == 'C' and var_left.location == 'memory'):
                 for lvar, rvar, type_str in process_local_variable(log, vrg, cfg_obj, instr, call_type, var_left, cfg_obj._function.parameters, parent):
                     if lvar is not None:
@@ -1378,7 +1378,7 @@ def process_member_ir(log, vrg, instr, variable, cfg_obj, call_type, parent):
             index_node = IndexNode(var_left, None, struct_member)
             vrg._reference_variables[lvalue] = index_node
         
-        elif type(var_left).__name__ == 'ContractSolc04':
+        elif type(var_left).__name__ == 'Contract':
             var_node = create_var_node(log, instr, var_left, struct_member)
             vrg._ref_to_state[lvalue] = var_node
             index_node = IndexNode(var_left, None, struct_member)
@@ -1407,7 +1407,7 @@ def process_balance_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=Non
             index_node = IndexNode(lvar, None, BALANCE)
             vrg._reference_variables[lvalue] = index_node                                      
     
-    elif type(instr.value).__name__ == 'StateVariableSolc':
+    elif type(instr.value).__name__ == 'StateVariable':
         lvalue = instr.lvalue
         
         if lvalue not in vrg._ref_to_state.keys():
@@ -1443,7 +1443,7 @@ def process_balance_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=Non
             index_node = IndexNode(vrg._reference_variables[instr.value], None, BALANCE)
             vrg._reference_variables[lvalue] = index_node
 
-    elif type(instr.value).__name__ == 'LocalVariableSolc':
+    elif type(instr.value).__name__ == 'LocalVariable':
         lvalue = instr.lvalue
         variable = process_left_or_right_variable(log, vrg, instr.value, cfg_obj, call_type, instr, cfg_obj._function.parameters, parent)
         
@@ -1465,7 +1465,7 @@ def process_balance_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=Non
 def process_length_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=None):
     lvalue = instr.lvalue
 
-    if type(instr.value).__name__ == 'StateVariableSolc':
+    if type(instr.value).__name__ == 'StateVariable':
         origin_var = get_state_var_obj(log, instr.value)
         varnode = create_var_node(log, instr, origin_var, LENGTH)
         vrg._ref_to_state[lvalue] = varnode
@@ -1479,7 +1479,7 @@ def process_length_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=None
         index_node = IndexNode(origin_var, None, LENGTH)
         vrg._reference_variables[lvalue] = index_node
     
-    elif type(instr.value).__name__ == 'LocalVariableSolc':
+    elif type(instr.value).__name__ == 'LocalVariable':
         
         if instr.value.location == 'storage':
             for lvar, rvar, type_str in process_local_variable(log, vrg, cfg_obj, instr, call_type, instr.value, cfg_obj._function.parameters, parent):
@@ -1591,14 +1591,14 @@ def process_return_argument(log, vrg, callee_function, function_return, call_arg
                 if type(element).__name__ in CONSTANT_TYPES:
                     binary_op_list.append(element)
 
-                elif type(element).__name__ == 'StateVariableSolc':
+                elif type(element).__name__ == 'StateVariable':
                     s_var_obj = get_state_var_obj(element)
                     binary_op_list.append(s_var_obj)
                 
                 elif type(element).__name__ in SOLIDITY_VARS:
                     binary_op_list.append(element) 
                 
-                elif type(element).__name__ == 'LocalVariableSolc':
+                elif type(element).__name__ == 'LocalVariable':
                     binary_op_list.append('U') 
                 
                 elif isinstance(element, StateVar):
@@ -1624,7 +1624,7 @@ def process_return_argument(log, vrg, callee_function, function_return, call_arg
             caller_var = call_arguments[index]
             binary_op_list.append(function_return)
         
-        elif type(function_return).__name__ == 'StateVariableSolc':
+        elif type(function_return).__name__ == 'StateVariable':
             s_var_obj = get_state_var_obj(function_return)
             binary_op_list.append(s_var_obj)
         
@@ -1707,7 +1707,7 @@ def get_call_arguments_origin(log, vrg, argument, call_instr, caller_parameters,
             res = replace_state_var_with_index_node(res, argument, vrg)
             origin_res = get_call_arguments_origin(log, vrg, res, call_instr, caller_parameters, caller_cfg_obj, call_type, parent) 
         
-        elif type(argument).__name__ == 'StateVariableSolc':
+        elif type(argument).__name__ == 'StateVariable':
             origin_res = [argument]
             origin_var = get_state_var_obj(log, argument)
             
@@ -1725,7 +1725,7 @@ def get_call_arguments_origin(log, vrg, argument, call_instr, caller_parameters,
             else:
                 origin_res = [argument]                    
         
-        elif type(argument).__name__ == 'LocalVariableSolc':
+        elif type(argument).__name__ == 'LocalVariable':
             taint_flag = is_tainted(log, argument, caller_cfg_obj, caller_cfg_obj._function.contract)
             
             if taint_flag == True: #and argument in caller_parameters:

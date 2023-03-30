@@ -35,7 +35,7 @@ import traceback
 
 # Improvements: Probably we may need to field sensitive
 CONSTANT_TYPES = ['int', 'str', 'Constant']
-VARIBLE_TYPES = ['StateVariableSolc', 'LocalVariableSolc']
+VARIBLE_TYPES = ['StateVariable', 'LocalVariable']
 SOLIDITY_VARS = ['SolidityVariableComposed', 'SolidityVariable']
 int_type = ElementaryType('int')
 
@@ -153,7 +153,7 @@ class VRG:
             if function.name in self.callgraph._slither_special_functions.keys():
                 continue
             
-            if type(function).__name__ == 'StateVariableSolc':
+            if type(function).__name__ == 'StateVariable':
                 continue
             cfg_obj = self.generate_cfgs(contract, function)
             
@@ -236,6 +236,10 @@ class VRG:
         parameters = function.parameters
         returns_a = set(function.returns)
         returns_b = set(function.return_values)
+        print("function type: %s" % type(function))
+        print("parameters: %s" % parameters)
+        print("returns_a: %s" % returns_a)
+        print("returns_b: %s" % returns_b)
         return_values = get_return_values(self.log, self, cfg_obj)
 
         if len(cfg_obj._return_summary) == 0:
@@ -292,7 +296,7 @@ class VRG:
     def generate_range_graph(self, cfg_obj, parameters, return_values):
         for ircall in cfg_obj._ircall_to_bb.keys():
             call_basic_block = cfg_obj._ircall_to_bb[ircall]
-            if type(ircall.function).__name__ == 'StateVariableSolc':
+            if type(ircall.function).__name__ == 'StateVariable':
                 continue
             call_cfg = CFG.function_cfg[ircall.function]
             
@@ -328,7 +332,7 @@ class VRG:
             self.log.info("Range graph generated")
         
         else:
-            self.log.info("State variable assignement do not exist")
+            self.log.info("State variable assignment do not exist")
         
         self.log.info("Processed function %s"  % cfg_obj._function.name)
             #self.check_return_summary(cfg_obj)
@@ -380,7 +384,7 @@ class VRG:
                 if argument != None:
                     # The argument is a local variable process it using the corresponding method
                     # for processing local vars
-                    if type(argument).__name__ == 'LocalVariableSolc':
+                    if type(argument).__name__ == 'LocalVariable':
 
                         # If the argument is tainted, we know that the pre-condition on a tainted argument handrly matters
                         # as the attacker can cotrol it arbitrarily to satify te pre-condition, so we don't add that as an pre-condition
@@ -420,7 +424,7 @@ class VRG:
 
                     # If the argument involves state variable directly, don't need to process further,
                     # we just add that as a pre-condition
-                    elif type(argument).__name__ == 'StateVariableSolc':
+                    elif type(argument).__name__ == 'StateVariable':
                         res_var = get_state_var_obj(self.log, argument)
                         range_node = RangeNode(res_var, parent, 'true', '==')
                         graph.add_edge(range_node, node)
@@ -488,13 +492,13 @@ class VRG:
         if type(rvalue).__name__ == 'Constant':
             graph_list = self.process_constant_rvalue(s_var, rvalue, container_bb, cfg_obj, svar_assign_ir)
 
-        elif type(rvalue).__name__ == 'LocalVariableSolc':
+        elif type(rvalue).__name__ == 'LocalVariable':
             graph_list = self.process_localvar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, svar_assign_ir)
 
         elif type(rvalue).__name__ == 'TemporaryVariable':
             graph_list = self.process_tempvar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, svar_assign_ir)
         
-        elif type(rvalue).__name__ == 'StateVariableSolc':
+        elif type(rvalue).__name__ == 'StateVariable':
             graph_list = self.process_statevar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, svar_assign_ir)
 
         elif type(rvalue).__name__ == 'ReferenceVariable':
@@ -674,7 +678,11 @@ class VRG:
         var_left = process_left_or_right_variable(self.log, self, svar_assign_ir.variable_left, cfg_obj, '', svar_assign_ir, parameters)
         var_right = process_left_or_right_variable(self.log, self, svar_assign_ir.variable_right, cfg_obj, '', svar_assign_ir, parameters)
         op_str = svar_assign_ir.type_str
-
+        print("var_left:", var_left, ", type:", type(var_left))
+        print("var_right:", var_right, ", type:", type(var_right))
+        print("svar:", svar, ", type:", type(svar))
+        print("container_bb:", container_bb, ", type:", type(container_bb))
+        [print("expr:", node.expression) for node in cfg_obj._function.nodes]
         if type(var_left).__name__ == 'int' and type(var_right).__name__ == 'int':
             res = perform_arithmetic_op(var_left, var_right, op_str)
             range_node = RangeNode(svar, container_bb, res, "=")

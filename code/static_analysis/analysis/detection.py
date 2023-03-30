@@ -206,7 +206,7 @@ class Detection:
 
             for l_node in only_left:
                 instr = l_node._instructions[-1]
-                if type(instr).__name__ == 'NodeSolc':
+                if type(instr).__name__ == 'Node':
                     continue
 
                 used_vars = instr.used
@@ -222,7 +222,7 @@ class Detection:
 
             for r_node in only_right:
                 instr = r_node._instructions[-1]
-                if type(instr).__name__ == 'NodeSolc':
+                if type(instr).__name__ == 'Node':
                     continue
                 used_vars = instr.used
 

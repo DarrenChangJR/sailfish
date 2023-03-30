@@ -29,8 +29,8 @@ import traceback
 
 
 CONSTANT_TYPES = ['int', 'str', 'Constant']
-VARIABLE_TYPES = ['StateVariableSolc', 'LocalVariableSolc']
-DESIRABLE_TYPES = ['StateVariableSolc', 'int', 'Constant', 'str']
+VARIABLE_TYPES = ['StateVariable', 'LocalVariable']
+DESIRABLE_TYPES = ['StateVariable', 'int', 'Constant', 'str']
 function_visibility = ['public', 'external']
 
 class VRG:
@@ -125,7 +125,7 @@ class VRG:
             s_lvar, s_rvar, type_str = self.process_temporary_variable(var_left, cfg_obj, parameters, parent, node, graph)
 
         else:
-            if type(var_left).__name__ == 'StateVariableSolc':
+            if type(var_left).__name__ == 'StateVariable':
                 s_lvar = self.get_state_var_obj(var_left)
 
             if type(var_left).__name__ == 'ReferenceVariable':
@@ -134,7 +134,7 @@ class VRG:
             if type(var_left).__name__ == 'Constant':
                 s_lvar = var_left.value
             
-            if type(var_left).__name__ == 'LocalVariableSolc':
+            if type(var_left).__name__ == 'LocalVariable':
                 if var_left in parameters:
                     s_lvar = var_left
                 
@@ -152,7 +152,7 @@ class VRG:
             s_lvar, s_rvar, type_str = self.process_temporary_variable(var_right, cfg_obj, parameters, parent, node, graph)
         
         else:
-            if type(var_right).__name__ == 'StateVariableSolc':
+            if type(var_right).__name__ == 'StateVariable':
                 s_rvar = self.get_state_var_obj(var_right)
             
             if type(var_right).__name__ == 'SolidityVariableComposed':
@@ -161,7 +161,7 @@ class VRG:
             if type(var_right).__name__ == 'Constant':
                 s_rvar = var_right.value
             
-            if type(var_right).__name__ == 'LocalVariableSolc':
+            if type(var_right).__name__ == 'LocalVariable':
                 if var_right in parameters:
                     s_rvar = var_right
                 
@@ -325,7 +325,7 @@ class VRG:
                     caller_var = call_arguments[index]
                     return_list.append(caller_var)
                 
-                elif type(function_return) == 'StateVariableSolc':
+                elif type(function_return) == 'StateVariable':
                     return_list.append(function_return)
                 
                 else:
@@ -344,10 +344,10 @@ class VRG:
         elif type(argument).__name__ == 'ReferenceVariable':
             origin_res = self.get_origin_variable_from_refvariable(call_instr, argument, caller_cfg_obj)
         
-        elif type(argument).__name__ == 'StateVariableSolc':
+        elif type(argument).__name__ == 'StateVariable':
             origin_res = argument
         
-        elif type(argument).__name__ == 'LocalVariableSolc':
+        elif type(argument).__name__ == 'LocalVariable':
             #: Fix this, need to check what is such local variables
             origin_res = argument
         
@@ -410,7 +410,7 @@ class VRG:
                 if type(rvalue).__name__ == 'TemporaryVariable':
                     s_lvar, s_rvar, type_str = self.process_temporary_variable(rvalue, cfg_obj, parameters, return_values)
                 
-                if type(rvalue).__name__ == 'LocalVariableSolc':
+                if type(rvalue).__name__ == 'LocalVariable':
                     pass
             else:
                 pass
@@ -542,11 +542,11 @@ class VRG:
         instrs = cfg_obj._vars_written[variable]
         for instr in instrs:
             if type(instr).__name__ == 'Index':
-                if type(instr.variable_left).__name__ == 'StateVariableSolc':
+                if type(instr.variable_left).__name__ == 'StateVariable':
                     self._ref_to_state[instr.lvalue] = instr.variable_left
                     return instr.variable_left
                 
-                elif type(instr.variable_left).__name__ == 'LocalVariableSolc':
+                elif type(instr.variable_left).__name__ == 'LocalVariable':
                     self._ref_to_state[instr.lvalue] = instr.variable_left
                     return instr.variable_left
                 

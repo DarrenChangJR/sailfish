@@ -138,7 +138,7 @@ class Compose:
 
         for function in self._sdg_objects:
             # We should not consider modifiers during sdg composition
-            if type(function).__name__ == 'ModifierSolc' or function.is_constructor:
+            if type(function).__name__ == 'Modifier' or function.is_constructor:
                 continue
 
             # We should only compose functions which are part of same contract
