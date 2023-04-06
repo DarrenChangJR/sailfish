@@ -257,7 +257,7 @@ class ICFG:
         
         for node in nodes:
             instr_type = node._instructions[0]
-            if type(instr_type).__name__ == 'Node' and instr_type.type == 0x0:
+            if type(instr_type).__name__ == 'Node' and instr_type.type == NodeType.ENTRYPOINT:
                 root_node = node
         return root_node
 

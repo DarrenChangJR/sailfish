@@ -74,7 +74,7 @@ class CFG:
         nodes = [x for x in self._cfg.nodes if self._cfg.in_degree(x) == 0]
         for node in nodes:
             basic_block = list(node)[0]
-            if node.NodeType == 0x0:
+            if node.NodeType == NodeType.ENTRYPOINT:
                 self._root_basic_block = node
 
     def get_leaf_basic_blocks(self):
@@ -303,7 +303,7 @@ class CFG:
                 last_instruction = basic_block._instructions[-1]
 
                 
-                if type(last_instruction).__name__ == 'Node' and last_instruction.type == 0x0 and composed_cfg.in_degree(basic_block) == 0:
+                if type(last_instruction).__name__ == 'Node' and last_instruction.type == NodeType.ENTRYPOINT and composed_cfg.in_degree(basic_block) == 0:
                     new_modifier = False
                     
                     if to_inlines != None:
@@ -337,14 +337,14 @@ class CFG:
                     self._condition_to_sons[basic_block]['true'] = next_blocks[0]
                     self._condition_to_sons[basic_block]['false'] = next_blocks[1]
                 
-                if type(last_instruction).__name__ == 'Node' and (last_instruction.type == 0x50 or last_instruction.type == 0x52):
+                if type(last_instruction).__name__ == 'Node' and (last_instruction.type == NodeType.ENDIF or last_instruction.type == NodeType.ENDLOOP):
                     if self._match_ENDIF_to_IF.get(basic_block) == None:
                         assert len(end_if_stack) != 0, "Debug, this can not happen"
                         
                         if_basic_block = end_if_stack.pop()
                         self._match_ENDIF_to_IF[basic_block] = if_basic_block
                 
-                if type(last_instruction).__name__ == 'Node' and last_instruction.type == 0x40:
+                if type(last_instruction).__name__ == 'Node' and last_instruction.type == NodeType.PLACEHOLDER:
                     if to_inlines == None:
                         to_inlines = []
                     to_inlines.append((basic_block, modifier))
@@ -470,7 +470,7 @@ class CFG:
                         
                         if type(ir).__name__ == 'Node':
                             
-                            if ir.type == 0x50:
+                            if ir.type == NodeType.ENDIF:
                                 if self._match_ENDIF_to_IF.get(successor) != None:
                                     predecessors = list(self._cfg.predecessors(successor))
                                 
@@ -480,7 +480,7 @@ class CFG:
                                     else:
                                         del self._match_ENDIF_to_IF[successor]
                             
-                            if ir.type == 0x52:
+                            if ir.type == NodeType.ENDLOOP:
                                 if self._match_ENDIF_to_IF.get(successor) != None:
                                     predecessors = list(self._cfg.predecessors(successor))
                                 
@@ -503,7 +503,7 @@ class CFG:
                         pre_dominator = node
                         
                         if type(ir).__name__ == 'Node':
-                            if ir.type == 0x50:
+                            if ir.type == NodeType.ENDIF:
                                 predecessors = list(self._cfg.predecessors(successor))
                                 if self._match_ENDIF_to_IF.get(successor) != None:
                                     if len(predecessors) > 1:
@@ -512,7 +512,7 @@ class CFG:
                                     else:
                                         del self._match_ENDIF_to_IF[successor]
                             
-                            if ir.type == 0x52:
+                            if ir.type == NodeType.ENDLOOP:
                                 if self._match_ENDIF_to_IF.get(successor) != None:
                                     predecessors = list(self._cfg.predecessors(successor))
                                 
@@ -599,7 +599,7 @@ class CFG:
     # It inserts the newly created basic block after the previous one
     # in the list. It returns the running basic block.
     def node_to_irssa(self, function, node, basic_block):
-        if node.type != 0x0:
+        if node.type != NodeType.ENTRYPOINT:
             if node.irs:
                 for ir in node.irs:
                     self.get_refvar_names(ir)
@@ -663,7 +663,7 @@ class CFG:
                 # here and start a new from the next instruction because the execution
                 # will start from the different function instead of executinf the immediate 
                 # next instruction
-                if node.type == 0x40:
+                if node.type == NodeType.PLACEHOLDER:
                     basic_block._instructions.append(node)
                     self._ir_to_block[node] = basic_block
                     basic_block._ir_to_node_map[node] = node
@@ -792,7 +792,7 @@ class CFG:
                 #print(node)
                 # If this is an entry node, start a fresh basic block
                 # from the next node onwards
-                if node.type == 0x0:
+                if node.type == NodeType.ENTRYPOINT:
                     # Add the corresponding ir to the basic block
                     basic_block = self.node_to_irssa(function, node, basic_block)
 
@@ -834,7 +834,7 @@ class CFG:
                         self._function_basic_blocks.append(basic_block)
 
                     
-                    if node.type == 0x15:
+                    if node.type == NodeType.IFLOOP:
                         if_loop_stack.append(basic_block)
                     
                     # This is to track IF-ENDIF
@@ -883,7 +883,7 @@ class CFG:
                         if basic_block not in self._function_basic_blocks:
                             self._function_basic_blocks.append(basic_block)
                         
-                elif node.type == 0x51:
+                elif node.type == NodeType.STARTLOOP:
                     
                     if node in self._node_to_block_mapping.keys():
                         basic_block = self._next_block_to_node[node]
@@ -903,7 +903,7 @@ class CFG:
                     # extract the block from the node to block mapping if present.
                     # add that block to the list of basic blocks
                     # map the running basic block to that node
-                    if len(node.fathers) > 1 or (len(node.fathers) == 1 and node.type == 0x50) or (len(node.fathers) == 1 and node.type == 0x52):
+                    if len(node.fathers) > 1 or (len(node.fathers) == 1 and node.type == NodeType.ENDIF) or (len(node.fathers) == 1 and node.type == NodeType.ENDLOOP):
                         
                         if node in self._node_to_block_mapping.keys():
                             basic_block = self._next_block_to_node[node]
@@ -918,11 +918,11 @@ class CFG:
                         if basic_block not in self._function_basic_blocks:
                             self._function_basic_blocks.append(basic_block)
                         
-                        if len(if_stack) != 0 and (node.type == 0x50):
+                        if len(if_stack) != 0 and (node.type == NodeType.ENDIF):
                             if_basic_block = if_stack.pop()
                             self._match_ENDIF_to_IF[basic_block] = if_basic_block
                         
-                        if node.type == 0x52:
+                        if node.type == NodeType.ENDLOOP:
                             if len(if_loop_stack) != 0:
                                 if_loop = if_loop_stack.pop()
                                 self._match_ENDIF_to_IF[basic_block] = if_loop
@@ -944,11 +944,11 @@ class CFG:
                             basic_block = self.node_to_irssa(function, node, basic_block)
                             self._next_block_to_node[node] = basic_block
                         
-                        if len(if_stack) != 0 and (node.type == 0x50):
+                        if len(if_stack) != 0 and (node.type == NodeType.ENDIF):
                             if_basic_block = if_stack.pop()
                             self._match_ENDIF_to_IF[basic_block] = if_basic_block 
 
-                        if node.type == 0x52:
+                        if node.type == NodeType.ENDLOOP:
                             if len(if_loop_stack) != 0:
                                 if_loop = if_loop_stack.pop()
                                 self._match_ENDIF_to_IF[basic_block] = if_loop

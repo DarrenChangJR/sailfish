@@ -957,6 +957,7 @@ class SDG:
         nodes = [x for x in graph.nodes if graph.in_degree(x) == 0]
         for node in nodes:
             instr_type = node._instructions[0]
+            print("Instr type: ", instr_type)
             if instr_type.type == 0x0:
                 root_node = node
         return root_node

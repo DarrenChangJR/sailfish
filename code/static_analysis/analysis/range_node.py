@@ -17,14 +17,15 @@ solidity_special_vars = ['block.coinbase', 'block.difficulty', 'block.gaslimit',
 class RangeNode:
     block_id = 0
     
-    def __init__(self, variable, basic_block, value, operation):
+    def __init__(self, variable, basic_block, value, operation, node):
         self._basic_block = basic_block
         self._variable = variable
         self._instructions = []
         RangeNode.block_id += 1
         self._block_id = RangeNode.block_id
         self._value = value
-        self._op = operation
+        self._op = str(operation)
+        self._node = node
         self._predecessors = {}
         self._true_or_false = {}
 
@@ -82,7 +83,7 @@ class RangeNode:
             
             if not isinstance(right_expression, list):
                 if not isinstance(left_expression, list):
-                    temp_var = "R" + str(TemporaryVariable(" "))
+                    temp_var = "R" + str(TemporaryVariable(self._node))
                     cond_ir = str(temp_var) + " = " + str(left_expression) + " " + self._op + " " + str(right_expression)
                     self._instructions.append(cond_ir)
                     ir = "CONDITION" + " " + str(temp_var)
@@ -92,14 +93,14 @@ class RangeNode:
                     temp_var_irs = []
                     temp_vars = []
                     for element in left_expression:
-                        temp_var = "R" + str(TemporaryVariable(" "))
+                        temp_var = "R" + str(TemporaryVariable(self._node))
                         cond_ir = str(temp_var) + " = " + str(element) + " " + self._op + " " + str(right_expression)
                         temp_vars.append(temp_var)
                         temp_var_irs.append(cond_ir)
                     
                     temp_var = temp_vars[0]
                     for i in range(1, len(temp_vars)):
-                        temp_var_1 = "R" + str(TemporaryVariable(" "))
+                        temp_var_1 = "R" + str(TemporaryVariable(self._node))
                         ir = temp_var_1 + " = " + temp_var + " || " + str(temp_vars[i])
                         temp_var_irs.append(ir)
                         temp_var = temp_var_1
@@ -114,7 +115,7 @@ class RangeNode:
                     temp_vars = []
                     
                     for element in right_expression:
-                        temp_var = "R" + str(TemporaryVariable(" "))
+                        temp_var = "R" + str(TemporaryVariable(self._node))
                         
                         if left_expression != '':
                             ir = str(temp_var) + " = " + str(left_expression) + " " + self._op + " " + str(element)
@@ -126,7 +127,7 @@ class RangeNode:
                     
                     temp_var = temp_vars[0]
                     for i in range(1, len(temp_vars)):
-                        temp_var_1 = "R" + str(TemporaryVariable(" "))
+                        temp_var_1 = "R" + str(TemporaryVariable(self._node))
                         ir = temp_var_1 + " = " + str(temp_var) + " || " + str(temp_vars[i])
                         temp_var_irs.append(ir)
                         temp_var = temp_var_1
@@ -141,14 +142,14 @@ class RangeNode:
                     temp_vars = []
                     for element in right_expression:
                         for left_element in left_expression:
-                            temp_var = "R" + str(TemporaryVariable(" "))
+                            temp_var = "R" + str(TemporaryVariable(self._node))
                             ir = str(temp_var) + " = " + str(left_element) + " " + self._op + " " + str(element)
                             temp_var_irs.append(ir)
                             temp_vars.append(temp_var)
                     temp_var = temp_vars[0]
                     
                     for i in range(1, len(temp_vars)):
-                        temp_var_1 = "R" + str(TemporaryVariable(" "))
+                        temp_var_1 = "R" + str(TemporaryVariable(self._node))
                         ir = temp_var_1 + " = " + str(temp_var) + " || " + str(temp_vars[i])
                         temp_var_irs.append(ir)
                         temp_var = temp_var_1
@@ -202,7 +203,7 @@ class RangeNode:
                     # Here we assume lvalue can not be a list
                     if not isinstance(rvalue, list):
                         if not isinstance(lvalue, list):
-                            temp_var = str(TemporaryVariable(" "))
+                            temp_var = str(TemporaryVariable(self._node))
                             expression = temp_var + " = " + lvalue + " " + op_str + " " + rvalue
                             self._instructions.append(expression)
                             return temp_var
@@ -211,7 +212,7 @@ class RangeNode:
                             expressions = []
                             temp_vars = []
                             for element in lvalue:
-                                temp_var = str(TemporaryVariable(" "))
+                                temp_var = str(TemporaryVariable(self._node))
                                 ir = temp_var + " = " + str(element) + " " + str(op_str) + " " + rvalue
                                 temp_vars.append(temp_var)
                                 expressions.append(ir)
@@ -224,7 +225,7 @@ class RangeNode:
                             expressions = []
                             temp_vars = []
                             for element in rvalue:
-                                temp_var = str(TemporaryVariable(" "))
+                                temp_var = str(TemporaryVariable(self._node))
                                 value = temp_var + " = " + str(lvalue) + " " + str(op_str) + " " + element
                                 temp_vars.append(temp_var)
                                 expressions.append(value)
@@ -238,7 +239,7 @@ class RangeNode:
                                 expressions = []
                                 temp_vars = []
                                 for element in rvalue:
-                                    temp_var = str(TemporaryVariable(" "))
+                                    temp_var = str(TemporaryVariable(self._node))
                                     value = temp_var + " = " + str(lvalue[0]) + " " + str(op_str) + " " + element
                                     temp_vars.append(temp_var)
                                     expressions.append(value)
@@ -267,7 +268,7 @@ class RangeNode:
                             temp_vars = []
                             
                             for element in rvalue:
-                                temp_var = str(TemporaryVariable(" "))
+                                temp_var = str(TemporaryVariable(self._node))
                                 value = temp_var + " = " + str(value[0]) + " " + element
                                 temp_vars.append(temp_var)
                                 expressions.append(value)
@@ -280,7 +281,7 @@ class RangeNode:
                         # and op str
                         else:
                             
-                            temp_var = str(TemporaryVariable(" "))
+                            temp_var = str(TemporaryVariable(self._node))
                             expression = temp_var + " = " + str(value[0]) + " " + str(value[1])
                             self._instructions.append(expression)
                             return temp_var                            
@@ -385,7 +386,7 @@ class RangeNode:
         return index_array
                 
     def generate_referencevariable_ir(self, lvar, rvar_1, rvar_2):
-        refvar = str(ReferenceVariable(""))
+        refvar = str(ReferenceVariable(self._node))
         if "." in rvar_1 and rvar_1 not in solidity_special_vars:
             rvar_1 = self.generate_ir_on_sep(rvar_1, ".")
         ir = refvar + " -> " + str(lvar) + "[" + str(rvar_1) + "]"
@@ -396,7 +397,7 @@ class RangeNode:
                 splits = str(rvar_2).split(".")
                 for elem in splits:
                     if elem != '':
-                        refvar_1 = str(ReferenceVariable(""))
+                        refvar_1 = str(ReferenceVariable(self._node))
                         ir = refvar_1 + " -> " + refvar + "." + elem
                         self._instructions.append(ir)
                         refvar = refvar_1
@@ -405,13 +406,13 @@ class RangeNode:
 
     def generate_ir_on_sep(self, value, sep):
         splits = str(value).split(sep)
-        refvar = str(ReferenceVariable(""))
+        refvar = str(ReferenceVariable(self._node))
         ir = refvar + " -> " + str(splits[0]) + sep + str(splits[1])
         self._instructions.append(ir)
         
         for elm in splits[2:]:
             if elm != '':
-                refvar_1 = str(ReferenceVariable(""))
+                refvar_1 = str(ReferenceVariable(self._node))
                 ir = refvar_1 + " -> " + str(refvar) + sep + str(elm)
                 self._instructions.append(ir)
                 refvar = refvar_1

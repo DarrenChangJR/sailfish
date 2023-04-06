@@ -24,7 +24,7 @@ class SolcVersionUnavailableException(Exception):
         self.solc_version = solc_version
     
     def __str__(self):
-        return 'solc %s not available' % self.solc_version
+        return f"Required solc version not installed, do `solc-select install {self.solc_version}`"
 
 
 class ParseException(Exception):
@@ -318,8 +318,7 @@ def get_solc_path(contract_path, log=None):
     # Is the required solc version already installed?
     # Install otherwise
     if solc_version_no_v not in installed_solc_versions:
-        print(f"Required solc version not installed, do `solc-select install ${solc_version_no_v}`")
-        sys.exit(1)
+        raise SolcVersionUnavailableException(solc_version_no_v)
     
     # Form required the path pointing to the required solc binary
     solc_path = os.path.join(AVAILABLE_SOLC_VERSION_PATHS[solc_version_no_v], solc_binary)

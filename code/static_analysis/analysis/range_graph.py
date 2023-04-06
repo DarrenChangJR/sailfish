@@ -236,10 +236,6 @@ class VRG:
         parameters = function.parameters
         returns_a = set(function.returns)
         returns_b = set(function.return_values)
-        print("function type: %s" % type(function))
-        print("parameters: %s" % parameters)
-        print("returns_a: %s" % returns_a)
-        print("returns_b: %s" % returns_b)
         return_values = get_return_values(self.log, self, cfg_obj)
 
         if len(cfg_obj._return_summary) == 0:
@@ -347,13 +343,14 @@ class VRG:
     
     # This function collects all the conditional pre-dominator of a particular basic block
     # Once found it adds out-going edges to that basic block in the range graph 
-    def collect_conditional_pre_dominators(self, basic_block, cfg_obj, graph, node, parameters = []):
+    def collect_conditional_pre_dominators(self, basic_block, cfg_obj, graph, def_range_node, parameters = []):
         if not cfg_obj._cfg.has_node(basic_block):
             return
         parents = cfg_obj._conditional_pre_dominators[basic_block]
         parents = list(set(parents))
         flag_condition = False
-        self._condition_to_node[node] = []
+        self._condition_to_node[def_range_node] = []
+        node = cfg_obj._function.nodes[0]
 
         for parent in parents:
             instruction = parent._instructions[-1]
@@ -396,7 +393,7 @@ class VRG:
                         else:
                             var_list = []
 
-                            for lvar, rvar, type_str in process_local_variable(self.log, self, cfg_obj, instruction, 'C', argument, parameters, parent, node, graph):
+                            for lvar, rvar, type_str in process_local_variable(self.log, self, cfg_obj, instruction, 'C', argument, parameters, parent, def_range_node, graph):
                                 var_list.append(lvar)
 
                             # If one of value in the val list id 'U', again we don't process it further
@@ -406,37 +403,37 @@ class VRG:
                             # Else, we add this in the range node
                             else:
                                 if isinstance(var_list[0], RangeNode):
-                                    self._condition_to_node[node].append((parent, var_list[0]))
+                                    self._condition_to_node[def_range_node].append((parent, var_list[0]))
 
                                 else:
                                     # Need to write use-def analysis for this
-                                    range_node = RangeNode(var_list[0], parent, 'true', '==')
-                                    graph.add_edge(range_node, node)
-                                    self._condition_to_node[node].append((parent, range_node))
+                                    range_node = RangeNode(var_list[0], parent, 'true', '==', node)
+                                    graph.add_edge(range_node, def_range_node)
+                                    self._condition_to_node[def_range_node].append((parent, range_node))
 
                     # The argument is a temporary variable process it using the corresponding method
                     # for processing temporary vars
                     elif type(argument).__name__ == 'TemporaryVariable':
-                        s_lvar, s_rvar, type_str = process_temporary_variable(self.log, self, argument, cfg_obj, 'C', parameters, parent, node, graph)
+                        s_lvar, s_rvar, type_str = process_temporary_variable(self.log, self, argument, cfg_obj, 'C', parameters, parent, def_range_node, graph)
                         if s_lvar != 'U' or 'U' not in s_lvar:
                         #if isinstance(s_lvar, list):
-                            self._condition_to_node[node].append((parent, s_lvar))
+                            self._condition_to_node[def_range_node].append((parent, s_lvar))
 
                     # If the argument involves state variable directly, don't need to process further,
                     # we just add that as a pre-condition
                     elif type(argument).__name__ == 'StateVariable':
                         res_var = get_state_var_obj(self.log, argument)
-                        range_node = RangeNode(res_var, parent, 'true', '==')
-                        graph.add_edge(range_node, node)
-                        self._condition_to_node[node].append((parent, range_node))
+                        range_node = RangeNode(res_var, parent, 'true', '==', node)
+                        graph.add_edge(range_node, def_range_node)
+                        self._condition_to_node[def_range_node].append((parent, range_node))
 
 
                     elif type(argument).__name__ == 'ReferenceVariable':
                         s_var = get_origin_variable_from_refvariable(self.log, self, instruction, argument, cfg_obj, 'C', parent)
                         s_var = replace_state_var_with_index_node(s_var, argument, self)
-                        range_node = RangeNode(s_var, parent, 'true', '==')
-                        graph.add_edge(range_node, node)
-                        self._condition_to_node[node].append((parent, range_node))
+                        range_node = RangeNode(s_var, parent, 'true', '==', node)
+                        graph.add_edge(range_node, def_range_node)
+                        self._condition_to_node[def_range_node].append((parent, range_node))
 
                     elif type(argument).__name__ == 'LocalVariableInitFromTupleSolc':
                         s_lvar = process_localVariableInitFromTupleSolc(self.log, self, cfg_obj, instruction, 'C', argument, parameters, parent)
@@ -445,9 +442,9 @@ class VRG:
                             continue
 
                         else:
-                            range_node = RangeNode(s_lvar, parent, 'true', '==')
-                            graph.add_edge(range_node, node)
-                            self._condition_to_node[node].append((parent, range_node))
+                            range_node = RangeNode(s_lvar, parent, 'true', '==', node)
+                            graph.add_edge(range_node, def_range_node)
+                            self._condition_to_node[def_range_node].append((parent, range_node))
 
                     # We should raise an alert if other types of variable is involved directly
                     # in an conditinal statement
@@ -455,13 +452,13 @@ class VRG:
                         self.log.warning("Someother variable in condition, figure out!")
                         sys.exit(1)
                     
-                    #range_node = RangeNode(s_var, parent, var_right, type_str)
+                    #range_node = RangeNode(s_var, parent, var_right, type_str, node)
                     #graph.add_edge(range_node, node)
                     flag_condition = False
         
         
         if len(parents) > 0:
-            self.get_node_true_false(parents, basic_block, node)
+            self.get_node_true_false(parents, basic_block, def_range_node)
 
 
     def get_range_nodes(self, nodes, node_list):
@@ -488,24 +485,24 @@ class VRG:
                 elif isinstance(parent_rn, RangeNode):
                     child_node._true_or_false[parent_rn] = child_cond
 
-    def process_rvalues(self, cfg_obj, s_var, container_bb, rvalue, parameters, svar_assign_ir, return_values):
+    def process_rvalues(self, cfg_obj, s_var, container_bb, rvalue, parameters, node, svar_assign_ir):
         if type(rvalue).__name__ == 'Constant':
-            graph_list = self.process_constant_rvalue(s_var, rvalue, container_bb, cfg_obj, svar_assign_ir)
+            graph_list = self.process_constant_rvalue(s_var, rvalue, container_bb, cfg_obj, node, svar_assign_ir)
 
         elif type(rvalue).__name__ == 'LocalVariable':
-            graph_list = self.process_localvar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, svar_assign_ir)
+            graph_list = self.process_localvar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, node, svar_assign_ir)
 
         elif type(rvalue).__name__ == 'TemporaryVariable':
-            graph_list = self.process_tempvar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, svar_assign_ir)
+            graph_list = self.process_tempvar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, node, svar_assign_ir)
         
         elif type(rvalue).__name__ == 'StateVariable':
-            graph_list = self.process_statevar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, svar_assign_ir)
+            graph_list = self.process_statevar_rvalue(s_var, rvalue, parameters, container_bb, cfg_obj, node, svar_assign_ir)
 
         elif type(rvalue).__name__ == 'ReferenceVariable':
-            graph_list = self.process_refvar_rvalue(s_var, rvalue, container_bb, cfg_obj, svar_assign_ir)
+            graph_list = self.process_refvar_rvalue(s_var, rvalue, container_bb, cfg_obj, node, svar_assign_ir)
         
         elif type(rvalue).__name__ in SOLIDITY_VARS:
-            graph_list = self.process_solidityvar_rvalue(s_var, rvalue, container_bb, cfg_obj, svar_assign_ir)
+            graph_list = self.process_solidityvar_rvalue(s_var, rvalue, container_bb, cfg_obj, node, svar_assign_ir)
         else:
             self.log.warning("Other types of rvalues! debug")
             sys.exit(1)
@@ -520,7 +517,13 @@ class VRG:
     def process_statevar_assignment(self, cfg_obj, parameters, return_values):
         count = 1
         graph_list = []
+
+        # If no nodes, there is naturally no state_vars_written
+        if not cfg_obj._function.nodes:
+            return
         
+        node = cfg_obj._function.nodes[0]
+
         for svar_assign_ir in cfg_obj.state_vars_written.keys():
             container_bb = cfg_obj.state_vars_written[svar_assign_ir]
             lvalue = svar_assign_ir.lvalue
@@ -543,7 +546,7 @@ class VRG:
                     self.value_graph[cfg_obj][s_var] = []
             
                 rvalue = svar_assign_ir.rvalue
-                graph_list = self.process_rvalues(cfg_obj, s_var, container_bb, rvalue, parameters, svar_assign_ir, return_values)
+                graph_list = self.process_rvalues(cfg_obj, s_var, container_bb, rvalue, parameters, node, svar_assign_ir)
             
             # If the instruction is not an assignment
             else:
@@ -561,7 +564,7 @@ class VRG:
                     if s_var not in self.value_graph[cfg_obj].keys():
                         self.value_graph[cfg_obj][s_var] = []
 
-                    graph_list = self.process_rvalues(cfg_obj, s_var, container_bb, svar_assign_ir.value, parameters, svar_assign_ir, return_values)
+                    graph_list = self.process_rvalues(cfg_obj, s_var, container_bb, svar_assign_ir.value, parameters, node, svar_assign_ir)
                 
                 # : fix issues with unary assignment
                 elif type(svar_assign_ir).__name__ == 'Unary':
@@ -570,7 +573,7 @@ class VRG:
                     
                     if s_var not in self.value_graph[cfg_obj].keys():
                         self.value_graph[cfg_obj][s_var] = []
-                    graph_list = self.process_unary_statements(s_var, svar_assign_ir, container_bb, parameters, cfg_obj)
+                    graph_list = self.process_unary_statements(s_var, svar_assign_ir, container_bb, parameters, cfg_obj, node)
                 
                 
                 # If the instruction is binary, then proceed to handle the binary instruction
@@ -581,7 +584,7 @@ class VRG:
                     if s_var not in self.value_graph[cfg_obj].keys():
                         self.value_graph[cfg_obj][s_var] = []
 
-                    graph_list = self.process_binary_statements(s_var, svar_assign_ir, container_bb, parameters, cfg_obj)
+                    graph_list = self.process_binary_statements(s_var, svar_assign_ir, container_bb, parameters, cfg_obj, node)
 
                 elif type(svar_assign_ir).__name__ == 'InitArray':
                     if cfg_obj not in self.value_graph.keys():
@@ -590,7 +593,7 @@ class VRG:
                     if s_var not in self.value_graph[cfg_obj].keys():
                         self.value_graph[cfg_obj][s_var] = []
                     
-                    graph_list = self.process_array_initialization(s_var, svar_assign_ir, container_bb, parameters, cfg_obj)
+                    graph_list = self.process_array_initialization(s_var, svar_assign_ir, container_bb, parameters, cfg_obj, node)
 
                 elif type(svar_assign_ir).__name__ == 'Unpack':
                     if cfg_obj not in self.value_graph.keys():
@@ -599,7 +602,7 @@ class VRG:
                     if s_var not in self.value_graph[cfg_obj].keys():
                         self.value_graph[cfg_obj][s_var] = []
 
-                    graph_list = self.process_tuple_unpack(s_var, svar_assign_ir, container_bb, parameters, cfg_obj)
+                    graph_list = self.process_tuple_unpack(s_var, svar_assign_ir, container_bb, parameters, cfg_obj, node)
 
                 else:
                     #if DEBUG:
@@ -612,7 +615,7 @@ class VRG:
                 #self.print_range_graph(self.graph_dir, cfg_obj._function, graph[0], str(count))
                 count += 1
 
-    def process_tuple_unpack(self, svar, svar_assign_ir, container_bb, parameters, cfg_obj):
+    def process_tuple_unpack(self, svar, svar_assign_ir, container_bb, parameters, cfg_obj, node):
         graphs_list = []
         tuple_var = svar_assign_ir.tuple
         lvar, rvar, type_str = process_tuple_variable(self.log, self, cfg_obj, svar_assign_ir, '', tuple_var, parameters)
@@ -623,7 +626,7 @@ class VRG:
             self.log.warning("This can only happen due to slither insanity, where slither does not capture the returned tuple properly, we ignore it for now!")
             sys.exit(1)
 
-        range_node = RangeNode(svar, container_bb, s_lvar, "=")
+        range_node = RangeNode(svar, container_bb, s_lvar, "=", node)
         s_graph = nx.MultiDiGraph()
         s_graph.add_node(range_node)
         svar_identifier_triplet = (range_node, s_graph, range_node._value)
@@ -632,11 +635,11 @@ class VRG:
 
         return graphs_list
 
-    def process_array_initialization(self, svar, svar_assign_ir, container_bb, parameters, cfg_obj):
+    def process_array_initialization(self, svar, svar_assign_ir, container_bb, parameters, cfg_obj, node):
         graphs_list = []
         rvalue = ['initarray']
         rvalue.extend(svar_assign_ir.init_values)
-        range_node = RangeNode(svar, container_bb, rvalue, "=")
+        range_node = RangeNode(svar, container_bb, rvalue, "=", node)
         s_graph = nx.MultiDiGraph()
         s_graph.add_node(range_node)
         svar_identifier_triplet = (range_node, s_graph, range_node._value)
@@ -645,7 +648,7 @@ class VRG:
 
         return graphs_list
     
-    def process_unary_statements(self, svar, svar_assign_ir, container_bb, parameters, cfg_obj):
+    def process_unary_statements(self, svar, svar_assign_ir, container_bb, parameters, cfg_obj, node):
         graphs_list = []
         range_node_list = []
         var_right = process_left_or_right_variable(self.log, self, svar_assign_ir.variable_right, cfg_obj, '', svar_assign_ir, parameters)
@@ -653,14 +656,14 @@ class VRG:
 
         if type(var_right).__name__ == 'int':
             res = perform_arithmetic_op('', var_right, op_str)
-            range_node = RangeNode(svar, container_bb, res, "=")
+            range_node = RangeNode(svar, container_bb, res, "=", node)
             range_node_list.append(range_node)
 
         else:
             res_list = []
             res_list.append(op_str)
             res_list.append(var_right)
-            range_node = RangeNode(svar, container_bb, res_list, "=")
+            range_node = RangeNode(svar, container_bb, res_list, "=", node)
             range_node_list.append(range_node)
 
         for range_node in range_node_list:
@@ -672,27 +675,23 @@ class VRG:
 
         return graphs_list                                     
 
-    def process_binary_statements(self, svar, svar_assign_ir, container_bb, parameters, cfg_obj):
+    def process_binary_statements(self, svar, svar_assign_ir, container_bb, parameters, cfg_obj, node):
         graphs_list = []
         range_node_list = []
         var_left = process_left_or_right_variable(self.log, self, svar_assign_ir.variable_left, cfg_obj, '', svar_assign_ir, parameters)
         var_right = process_left_or_right_variable(self.log, self, svar_assign_ir.variable_right, cfg_obj, '', svar_assign_ir, parameters)
         op_str = svar_assign_ir.type_str
-        print("var_left:", var_left, ", type:", type(var_left))
-        print("var_right:", var_right, ", type:", type(var_right))
-        print("svar:", svar, ", type:", type(svar))
-        print("container_bb:", container_bb, ", type:", type(container_bb))
-        [print("expr:", node.expression) for node in cfg_obj._function.nodes]
+
         if type(var_left).__name__ == 'int' and type(var_right).__name__ == 'int':
             res = perform_arithmetic_op(var_left, var_right, op_str)
-            range_node = RangeNode(svar, container_bb, res, "=")
+            range_node = RangeNode(svar, container_bb, res, "=", node)
             range_node_list.append(range_node)
 
         else:
             res_list = []
             s_lvar, s_rvar, type_str = handle_non_constant_binary_op(self.log, self, var_left, var_right, op_str)
             res_list.append(s_lvar)
-            range_node = RangeNode(svar, container_bb, res_list, "=")
+            range_node = RangeNode(svar, container_bb, res_list, "=", node)
             range_node_list.append(range_node)
 
         for range_node in range_node_list:
@@ -705,7 +704,7 @@ class VRG:
         return graphs_list                 
 
 
-    def process_localvar_rvalue(self, svar, rvalue, parameters, containter_bb, cfg_obj, svar_assign_ir):
+    def process_localvar_rvalue(self, svar, rvalue, parameters, containter_bb, cfg_obj, node, svar_assign_ir):
         value_list = []
         graphs_list = []
         
@@ -725,7 +724,7 @@ class VRG:
                 self.log.warning("What condition makes rvalue to be not tainted!")
 
         for value in value_list:
-            range_node = RangeNode(svar, containter_bb, value, "=")
+            range_node = RangeNode(svar, containter_bb, value, "=", node)
 
             s_graph = nx.MultiDiGraph()
             s_graph.add_node(range_node)
@@ -736,7 +735,7 @@ class VRG:
         return graphs_list
             
 
-    def process_statevar_rvalue(self, svar, rvalue, parameters, containter_bb, cfg_obj, svar_assign_ir):
+    def process_statevar_rvalue(self, svar, rvalue, parameters, containter_bb, cfg_obj, node, svar_assign_ir):
         graphs_list = []
         rvalue_origin = get_state_var_obj(self.log, rvalue)
 
@@ -744,7 +743,7 @@ class VRG:
             rvalue_origin = self._constant_state_vars[rvalue_origin]
         
         s_graph = nx.MultiDiGraph()
-        range_node = RangeNode(svar, containter_bb, rvalue_origin, "=")
+        range_node = RangeNode(svar, containter_bb, rvalue_origin, "=", node)
         s_graph.add_node(range_node)
         svar_identifier_triplet = (range_node, s_graph, rvalue_origin)
         self.value_graph[cfg_obj][svar].append(svar_identifier_triplet)
@@ -771,7 +770,7 @@ class VRG:
         
         return structure
     
-    def process_tempvar_rvalue(self, svar, rvalue, parameters, containter_bb, cfg_obj, svar_assign_ir):
+    def process_tempvar_rvalue(self, svar, rvalue, parameters, containter_bb, cfg_obj, node, svar_assign_ir):
         s_lvar = None
         s_rvar = None
         type_str = None
@@ -798,7 +797,7 @@ class VRG:
                 if i < initialization_length:
                     index_node = IndexNode(svar, None, structure.elems[elem])
                     s_graph = nx.MultiDiGraph()
-                    range_node = RangeNode(index_node, containter_bb, s_lvar[i], "=")
+                    range_node = RangeNode(index_node, containter_bb, s_lvar[i], "=", node)
                     s_graph.add_node(range_node)
                     svar_identifier_triplet = (range_node, s_graph, s_lvar[i])
                     self.value_graph[cfg_obj][svar].append(svar_identifier_triplet)
@@ -808,7 +807,7 @@ class VRG:
             for value in value_list:           
                 self.record_constructor_constant_vars(cfg_obj, svar, value)
                 s_graph = nx.MultiDiGraph()
-                range_node = RangeNode(svar, containter_bb, value, "=")
+                range_node = RangeNode(svar, containter_bb, value, "=", node)
                 s_graph.add_node(range_node)
                 svar_identifier_triplet = (range_node, s_graph, value)
                 self.value_graph[cfg_obj][svar].append(svar_identifier_triplet)
@@ -816,10 +815,10 @@ class VRG:
         
         return graphs_list
 
-    def process_constant_rvalue(self, s_var, rvalue, container_bb, cfg_obj, svar_assign_ir):
+    def process_constant_rvalue(self, s_var, rvalue, container_bb, cfg_obj, node, svar_assign_ir):
         graphs_list = []
         self.record_constructor_constant_vars(cfg_obj, s_var, rvalue)
-        range_node = RangeNode(s_var, container_bb, rvalue, "=")
+        range_node = RangeNode(s_var, container_bb, rvalue, "=", node)
         s_graph = nx.MultiDiGraph()
         s_graph.add_node(range_node)
         svar_identifier_triplet = (range_node, s_graph, rvalue)
@@ -827,10 +826,10 @@ class VRG:
         graphs_list.append((s_graph, range_node))
         return graphs_list
     
-    def process_solidityvar_rvalue(self, s_var, rvalue, container_bb, cfg_obj, svar_assign_ir):
+    def process_solidityvar_rvalue(self, s_var, rvalue, container_bb, cfg_obj, node, svar_assign_ir):
         graphs_list = []
         self.record_constructor_constant_vars(cfg_obj, s_var, rvalue)
-        range_node = RangeNode(s_var, container_bb, rvalue, "=")
+        range_node = RangeNode(s_var, container_bb, rvalue, "=", node)
         s_graph = nx.MultiDiGraph()
         s_graph.add_node(range_node)
         svar_identifier_triplet = (range_node, s_graph, rvalue)
@@ -838,14 +837,14 @@ class VRG:
         graphs_list.append((s_graph, range_node))
         return graphs_list
     
-    def process_refvar_rvalue(self, svar, rvalue, container_bb, cfg_obj, svar_assign_ir):
+    def process_refvar_rvalue(self, svar, rvalue, container_bb, cfg_obj, node, svar_assign_ir):
         graphs_list = []
         origin_var = get_origin_variable_from_refvariable(self.log, self, None, rvalue, cfg_obj, '')
 
         if origin_var in self._constant_state_vars.keys():
             origin_var = self._constant_state_vars[origin_var]
         
-        range_node = RangeNode(svar, container_bb, origin_var, "=")
+        range_node = RangeNode(svar, container_bb, origin_var, "=", node)
         s_graph = nx.MultiDiGraph()
         s_graph.add_node(range_node)
         svar_identifier_triplet = (range_node, s_graph, origin_var)

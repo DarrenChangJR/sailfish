@@ -416,7 +416,7 @@ def handle_unary_statement(log, vrg, instr, cfg_obj, call_type, parameters=[], p
         if isinstance(s_lvar, RangeNode):
             graph.remove_edge(s_lvar, node)
 
-        range_node = RangeNode('', parent, s_lvar, type_str)
+        range_node = RangeNode('', parent, s_lvar, type_str, cfg_obj._function.nodes[0])
 
         graph.add_edge(range_node, node)
         s_lvar = range_node
@@ -520,7 +520,7 @@ def handle_binary_statement(log, vrg, instr, cfg_obj, call_type, parameters=[], 
             else:
                 if isinstance(s_lvar, RangeNode):
                     graph.remove_edge(s_lvar, node)
-                range_node = RangeNode(s_lvar, parent, s_rvar, type_str)
+                range_node = RangeNode(s_lvar, parent, s_rvar, type_str, cfg_obj._function.nodes[0])
                 graph.add_edge(range_node, node)
 
                 s_lvar = range_node
@@ -564,7 +564,7 @@ def create_rangenode_if_not_exists(log, vrg, var_obj, cfg_obj, call_type, parame
     
     else:
         if isinstance(var_obj, VarNode) or isinstance(var_obj, IndexNode) or isinstance(var_obj, StateVar):
-            range_node = RangeNode(var_obj, parent, "true", "==")
+            range_node = RangeNode(var_obj, parent, "true", "==", cfg_obj._function.nodes[0])
             graph.add_edge(range_node, node)
             return range_node
         
@@ -574,7 +574,7 @@ def create_rangenode_if_not_exists(log, vrg, var_obj, cfg_obj, call_type, parame
                     return var_obj
                 
                 else:
-                    range_node = RangeNode("true", parent, "", "")
+                    range_node = RangeNode("true", parent, "", "", cfg_obj._function.nodes[0])
                     graph.add_edge(range_node, node)
                     return range_node
             else:
