@@ -202,15 +202,11 @@ class SDG:
                         if type(var_left).__name__ == 'StateVariable':
                             origin_var = SDG.map_svars_to_sobj[instr.variable_left]
                         
-                        elif type(var_left).__name__ == 'Enum':
+                        elif type(var_left).__name__ == 'EnumContract':
                             origin_var = var_left
                         
                         elif type(var_left).__name__ == 'Contract':
                             origin_var = var_left 
-
-                        elif type(var_left).__name__ == 'Contract':
-                            self._log.warning("Contract type var left should be handled!")
-                            sys.exit(1)
 
                         elif type(var_left).__name__ == 'SolidityVariable' or type(var_left).__name__ == 'SolidityVariableComposed':
                             origin_var = var_left
@@ -308,7 +304,10 @@ class SDG:
         # For every storage variable being written add a store edge from 
         # the instr block to the storage variable
         for var_w in s_var_list:
-
+            
+            if var_w == None:
+                continue
+            
             if type(var_w).__name__ == 'StateVariable':
                 var_w = SDG.map_svars_to_sobj[var_w]
             
@@ -559,7 +558,7 @@ class SDG:
                                 if (value, ir_instr) not in self.inter_contract_calls:
                                     self.inter_contract_calls.append((value, ir_instr))
                     except:
-                        self._log.warning("Issues with getting the high level call destination address")
+                        self._log.warning("Issues with getting the low level call destination address")
 
                     arguments = ir_instr.arguments
                     for arg in arguments:
@@ -727,7 +726,7 @@ class SDG:
             dependent_vars.append(target)
 
         elif type(target).__name__ == 'LocalVariable' or type(target).__name__ == 'TemporaryVariable'\
-                or type(target).__name__ == 'LocalVariableInitFromTupleSolc' or type(target).__name__ == 'TupleVariable':
+                or type(target).__name__ == 'LocalVariableInitFromTuple' or type(target).__name__ == 'TupleVariable':
 
             if CFG.lvalue_vars.get(target) is not None:
                 lvalue_instrs = CFG.lvalue_vars[target]
@@ -957,7 +956,8 @@ class SDG:
         nodes = [x for x in graph.nodes if graph.in_degree(x) == 0]
         for node in nodes:
             instr_type = node._instructions[0]
-            print("Instr type: ", instr_type)
+            [print("DANGER") for _ in range(10)]
+            traceback.print_stack()
             if instr_type.type == 0x0:
                 root_node = node
         return root_node

@@ -906,7 +906,7 @@ def get_structure_vars(state_variables):
 
     for var in state_variables:
         if type(var.type).__name__ == 'UserDefinedType':
-            if type(var.type.type).__name__ == 'StructureSolc':
+            if type(var.type.type).__name__ == 'StructureContract':
                 map_svars_to_struct[var] = var.type.type
 
         if type(var.type).__name__ == 'MappingType':
@@ -914,17 +914,19 @@ def get_structure_vars(state_variables):
             type_to, type_from = get_vartypes_from_mappingtype(var.type.type_to, var.type.type_from)
 
             if type(type_to).__name__ == 'UserDefinedType':
-                if type(type_to.type).__name__ == 'StructureSolc':
+                if type(type_to.type).__name__ == 'StructureContract':
                     map_svars_to_struct[var] = type_to.type
 
             if type(type_from).__name__ == 'UserDefinedType':
-                if type(type_from.type).__name__ == 'StructureSolc':
-                    structure_vars[var] = type_from.type.elems
-                    map_svars_to_struct[var] = type_from.type
+                if type(type_from.type).__name__ == 'StructureContract':
+                    [print("DANGER") for _ in range(10)]
+                    traceback.print_stack()
+                    # structure_vars[var] = type_from.type.elems
+                    # map_svars_to_struct[var] = type_from.type
 
         if type(var.type).__name__ == 'ArrayType':
             if type(var.type.type).__name__ == 'UserDefinedType':
-                if type(var.type.type.type).__name__ == 'StructureSolc':
+                if type(var.type.type.type).__name__ == 'StructureContract':
                     map_svars_to_struct[var] = var.type.type.type
 
     return map_svars_to_struct

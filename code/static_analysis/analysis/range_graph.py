@@ -435,8 +435,8 @@ class VRG:
                         graph.add_edge(range_node, def_range_node)
                         self._condition_to_node[def_range_node].append((parent, range_node))
 
-                    elif type(argument).__name__ == 'LocalVariableInitFromTupleSolc':
-                        s_lvar = process_localVariableInitFromTupleSolc(self.log, self, cfg_obj, instruction, 'C', argument, parameters, parent)
+                    elif type(argument).__name__ == 'LocalVariableInitFromTuple':
+                        s_lvar = process_localVariableInitFromTuple(self.log, self, cfg_obj, instruction, 'C', argument, parameters, parent)
 
                         if s_lvar == 'U' or (isinstance(s_lvar, list) and 'U' in s_lvar):
                             continue

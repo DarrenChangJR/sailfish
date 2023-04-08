@@ -485,21 +485,22 @@ def get_type_information(s_var, log):
     elif type(var_type).__name__ == 'ElementaryType':
         type_info.append(str(var_type))
 
-    elif type(var_type).__name__ == 'StructureSolc':
+    elif type(var_type).__name__ == 'StructureContract':
         type_info.append(str(var_type.name))
 
     elif type(var_type).__name__ == 'UserDefinedType':
-        if type(var_type.type).__name__ == 'StructureSolc':
+        if type(var_type.type).__name__ == 'StructureContract':
             type_info.append(str(var_type.type.name))
 
         elif type(var_type.type).__name__ == 'Contract':
             type_info.append('address')
 
-        elif type(var_type.type).__name__ == 'Enum':
+        elif type(var_type.type).__name__ == 'EnumContract':
             #type_info.append(str(var_type.type.name))
             type_info.append("integer")
 
         else:
+            print(type(var_type.type))
             log.warning("Other types of variable in symex helper")
             sys.exit(1)
 
@@ -643,10 +644,10 @@ def get_localvar_type(local_var, log):
         if type(local_var.type.type).__name__ == 'Contract':
             type_info = 'integer'
 
-        elif type(local_var.type.type).__name__ == 'StructureSolc':
+        elif type(local_var.type.type).__name__ == 'StructureContract':
             type_info = str(local_var.type.type.name)
 
-        elif type(local_var.type.type).__name__ == 'Enum':
+        elif type(local_var.type.type).__name__ == 'EnumContract':
             type_info = str(local_var.type.type.name)
 
         else:
@@ -813,10 +814,10 @@ def parse_reference_variable_names(instructions, log):
                     if type(index_type.type).__name__ == 'Contract':
                         str_instr = str(instr.lvalue) + " := " + "NEW_VAL " + "integer"
 
-                    elif type(index_type.type).__name__ == 'StructureSolc':
+                    elif type(index_type.type).__name__ == 'StructureContract':
                         str_instr = str(instr.lvalue) + " := " + "NEW_VAL " + str(index_type.type.name)
 
-                    elif type(index_type.type).__name__ == 'Enum':
+                    elif type(index_type.type).__name__ == 'EnumContract':
                         str_instr = str(instr.lvalue) + " := " + "NEW_VAL " + 'unknown'
 
                     else:
@@ -1023,12 +1024,12 @@ def output_tod_amount_or_receiver_paths(slither_obj, file_n, result_dir, log, gl
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'integer'
                     json_block_dict['instructions'].append(var_creation_instr)
 
-                elif type(local_d.type.type).__name__ == 'StructureSolc':
+                elif type(local_d.type.type).__name__ == 'StructureContract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + str(
                         local_d.type.type.name)
                     json_block_dict['instructions'].append(var_creation_instr)
 
-                elif type(local_d.type.type).__name__ == 'Enum':
+                elif type(local_d.type.type).__name__ == 'EnumContract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'unknown'
                     json_block_dict['instructions'].append(var_creation_instr)
 
@@ -1085,11 +1086,11 @@ def output_tod_amount_or_receiver_paths(slither_obj, file_n, result_dir, log, gl
                                 if type(lvalue.type.type).__name__ == 'Contract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + "integer"
 
-                                elif type(lvalue.type.type).__name__ == 'StructureSolc':
+                                elif type(lvalue.type.type).__name__ == 'StructureContract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + str(
                                         lvalue.type.type.name)
 
-                                elif type(lvalue.type.type).__name__ == 'Enum':
+                                elif type(lvalue.type.type).__name__ == 'EnumContract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + 'unknown'
 
                                 else:
@@ -1243,12 +1244,12 @@ def output_tod_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'integer'
                     json_block_dict['instructions'].append(var_creation_instr)
 
-                elif type(local_d.type.type).__name__ == 'StructureSolc':
+                elif type(local_d.type.type).__name__ == 'StructureContract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + str(
                         local_d.type.type.name)
                     json_block_dict['instructions'].append(var_creation_instr)
 
-                elif type(local_d.type.type).__name__ == 'Enum':
+                elif type(local_d.type.type).__name__ == 'EnumContract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'unknown'
                     json_block_dict['instructions'].append(var_creation_instr)
 
@@ -1305,11 +1306,11 @@ def output_tod_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
                                 if type(lvalue.type.type).__name__ == 'Contract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + "integer"
 
-                                elif type(lvalue.type.type).__name__ == 'StructureSolc':
+                                elif type(lvalue.type.type).__name__ == 'StructureContract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + str(
                                         lvalue.type.type.name)
 
-                                elif type(lvalue.type.type).__name__ == 'Enum':
+                                elif type(lvalue.type.type).__name__ == 'EnumContract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + 'unknown'
 
                                 else:
@@ -1488,11 +1489,11 @@ def output_dao_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'integer'
                     json_block_dict['instructions'].append(var_creation_instr)
 
-                elif type(local_d.type.type).__name__ == 'StructureSolc':
+                elif type(local_d.type.type).__name__ == 'StructureContract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + str(local_d.type.type.name)
                     json_block_dict['instructions'].append(var_creation_instr)
 
-                elif type(local_d.type.type).__name__ == 'Enum':
+                elif type(local_d.type.type).__name__ == 'EnumContract':
                     var_creation_instr = str(local_d) + ' ' + ':=' + ' ' + 'NEW_VAL' + ' ' + 'unknown'
                     json_block_dict['instructions'].append(var_creation_instr)
 
@@ -1547,10 +1548,10 @@ def output_dao_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
                                 if type(lvalue.type.type).__name__ == 'Contract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + "integer"
 
-                                elif type(lvalue.type.type).__name__ == 'StructureSolc':
+                                elif type(lvalue.type.type).__name__ == 'StructureContract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + str(lvalue.type.type.name)
 
-                                elif type(lvalue.type.type).__name__ == 'Enum':
+                                elif type(lvalue.type.type).__name__ == 'EnumContract':
                                     ext_call_lvalue_instr = str(lvalue) + " := " + "NEW_VAL " + 'unknown'
 
                                 else:

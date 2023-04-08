@@ -142,9 +142,9 @@ def process_tuple_variable_return(log, vrg, parameters, return_instr, return_val
 
     cfg_obj._return_summary[return_value] = return_summary
 
-def process_LocalVariableInitFromTupleSolc_return(log, vrg, parameters, return_instr, return_value, cfg_obj):
+def process_LocalVariableInitFromTuple_return(log, vrg, parameters, return_instr, return_value, cfg_obj):
     return_summary = []
-    lvar = process_localVariableInitFromTupleSolc(log, vrg, cfg_obj, return_instr, "R", return_value, parameters)
+    lvar = process_localVariableInitFromTuple(log, vrg, cfg_obj, return_instr, "R", return_value, parameters)
     
     if lvar is not None:
         if isinstance(lvar, list):
@@ -202,8 +202,8 @@ def generate_return_summary(log, vrg, cfg_obj, parameters, return_values):
             elif type(value).__name__ == 'TupleVariable':
                 process_tuple_variable_return(log, vrg, parameters, return_instr, value, cfg_obj)
             
-            elif type(value).__name__ == 'LocalVariableInitFromTupleSolc':
-                process_LocalVariableInitFromTupleSolc_return(log, vrg, parameters, return_instr, value, cfg_obj)
+            elif type(value).__name__ == 'LocalVariableInitFromTuple':
+                process_LocalVariableInitFromTuple_return(log, vrg, parameters, return_instr, value, cfg_obj)
 
             # : This else part need to be fixed
             else:

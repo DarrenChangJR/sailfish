@@ -220,8 +220,8 @@ def process_left_or_right_variable(log, vrg, variable, cfg_obj, call_type, instr
             res_var = get_origin_variable_from_refvariable(log, vrg, instr, variable, cfg_obj, call_type, parent)
             res_var = replace_state_var_with_index_node(res_var, variable, vrg)
         
-        elif type(variable).__name__ == 'LocalVariableInitFromTupleSolc':
-            res_var = process_localVariableInitFromTupleSolc(log, vrg, cfg_obj, instr, call_type, variable, parameters, parent)
+        elif type(variable).__name__ == 'LocalVariableInitFromTuple':
+            res_var = process_localVariableInitFromTuple(log, vrg, cfg_obj, instr, call_type, variable, parameters, parent)
         
         elif type(variable).__name__ == 'TupleVariable':
             s_lvar, s_rvar, type_str = process_tuple_variable(log, vrg, cfg_obj, instr, call_type, variable, parameters, parent)
@@ -1261,14 +1261,14 @@ def process_index_ir(log, vrg, instr, variable, cfg_obj, call_type, parent=None)
             log.warning("Solidity composed variable needs to be taken care!")
             sys.exit(1)
 
-def process_localVariableInitFromTupleSolc(log, vrg, cfg_obj, instruction, call_type, variable, parameters, parent=None):
+def process_localVariableInitFromTuple(log, vrg, cfg_obj, instruction, call_type, variable, parameters, parent=None):
     instrs = CFG.lvalue_vars[variable]
     s_lvar = None
 
     try:
         assert len(instrs) == 1, "need to handle this!"
     except AssertionError as error:
-        log.warning("instrs length LocalVariableInitFromTupleSolc is more than 1")
+        log.warning("instrs length LocalVariableInitFromTuple is more than 1")
         sys.exit(1)
     
     instr = instrs[0]
@@ -1288,7 +1288,7 @@ def process_localVariableInitFromTupleSolc(log, vrg, cfg_obj, instruction, call_
         s_lvar = lvar
     
     else:
-        log.warning("Other types of instructions involving LocalVariableInitFromTupleSolc!")
+        log.warning("Other types of instructions involving LocalVariableInitFromTuple!")
         sys.exit(1)
     
     return s_lvar  
@@ -1372,7 +1372,7 @@ def process_member_ir(log, vrg, instr, variable, cfg_obj, call_type, parent):
             log.warning("Solidity composed variable needs to be taken care!")
             sys.exit(1)
 
-        elif type(var_left).__name__ == 'Enum':
+        elif type(var_left).__name__ == 'EnumContract':
             var_node = create_var_node(log, instr, var_left, struct_member)
             vrg._ref_to_state[lvalue] = var_node
             index_node = IndexNode(var_left, None, struct_member)
@@ -1782,9 +1782,9 @@ def get_call_arguments_origin(log, vrg, argument, call_instr, caller_parameters,
             # : This is not perfect, probably needs to be looked at
             origin_res = [argument]        
         
-        elif type(argument).__name__ == 'LocalVariableInitFromTupleSolc':
+        elif type(argument).__name__ == 'LocalVariableInitFromTuple':
 
-            lvar = process_localVariableInitFromTupleSolc(log, vrg, caller_cfg_obj, call_instr, call_type, argument, caller_parameters, parent)
+            lvar = process_localVariableInitFromTuple(log, vrg, caller_cfg_obj, call_instr, call_type, argument, caller_parameters, parent)
             origin_res = lvar
         
         else:
