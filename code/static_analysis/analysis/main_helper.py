@@ -472,10 +472,11 @@ def check_for_tainted_call(sdg_objects, generated_sdg, owner_only_modifiers, cal
     for function in sdg_objects.keys():
         if destination_function.name == function.name and sdg_objects[function]._is_ext_call is True \
             and len(call_instr.arguments) == len(function.parameters):
-            for actual_parameter in call_instr.arguments:
-                position = call_instr.arguments.index(actual_parameter)
-                if not slither.analyses.data_dependency.data_dependency.is_tainted(actual_parameter, call_instr.node.function):
-                    function.slither.context['DATA_DEPENDENCY_INPUT'].remove(function.parameters[position])
+            # TODO: BUGGY BUT NECESSARY CODE
+            # for actual_parameter in call_instr.arguments:
+            #     position = call_instr.arguments.index(actual_parameter)
+            #     if not slither.analyses.data_dependency.data_dependency.is_tainted(actual_parameter, call_instr.node.function):
+            #         function.slither.context['DATA_DEPENDENCY_INPUT'].remove(function.parameters[position])
 
             for ext_call in sdg_objects[function]._ext_calls.keys():
                 if slither.analyses.data_dependency.data_dependency.is_tainted(ext_call.destination, function.contract):
@@ -506,17 +507,29 @@ def do_inter_contract_analysis(contract_path, call_instr, destination_function, 
     generated_sdg, sdg_objects, owner_only_modifiers = generate_sdg(slither_obj, generated_icfg, result_dir, False, log)
     log.info('Storage dependency graph generation finished!')
     is_ext_tainted = check_for_tainted_call(sdg_objects, generated_sdg, owner_only_modifiers, call_instr, destination_function)
-    return is_ext_tainted
+    return is_ext_tainted, sdg_objects
 
 
-def process_inter_contract_calls_if_exists(sdg_objects, contract_mapping_path, contract_dir, graph_dir, log):
+def process_inter_contract_calls_if_exists(sdg_objects, contract_mapping_path, contract_dir, graph_dir, log, visited_contracts=None):
+    if visited_contracts is None:
+        visited_contracts = set()
+
     contracts_addr_to_names = read_text_file(contract_mapping_path)
     for function in sdg_objects.keys():
         for inter_contract_call in sdg_objects[function].inter_contract_calls:
             contract_address_in_hex = hex(inter_contract_call[0])
             if contracts_addr_to_names.get(contract_address_in_hex) is not None:
                 contract_path = os.path.join(contract_dir, contracts_addr_to_names[contract_address_in_hex])
-                is_inter_contract_tainted = do_inter_contract_analysis(contract_path, inter_contract_call[1], inter_contract_call[1].function, log, graph_dir)
+
+                # Check if we have already processed this contract
+                if contract_path in visited_contracts:
+                    continue
+                visited_contracts.add(contract_path)
+                
+                # Recursively process inter-contract calls in the called contract
+                is_inter_contract_tainted, sdg_objects_in_called_contracts = do_inter_contract_analysis(contract_path, inter_contract_call[1], inter_contract_call[1].function, log, graph_dir)
+                process_inter_contract_calls_if_exists(sdg_objects_in_called_contracts, contract_mapping_path, contract_dir, graph_dir, log, visited_contracts)
+
 
                 if is_inter_contract_tainted:
                     sdg_objects[function]._is_ext_call = True
