@@ -1,12 +1,12 @@
 import sys
-sys.path.append("..")
-sys.path.append("../../symbolic_execution/")
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../symbolic_execution/'))
 
 from ir_translator import *
 from collections import OrderedDict
 import ujson
 import argparse
-import os
 import logging
 import sys
 import glob

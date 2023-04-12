@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.append("..")
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import glob
 import copy
@@ -34,7 +34,7 @@ from slither.core.declarations.solidity_variables import SolidityVariableCompose
 
 
 function_visibility = ['public', 'external']
-SYMDIR = "../../symbolic_execution"
+SYMDIR = os.path.join(os.path.dirname(__file__), '../../symbolic_execution/')
 racket_executable = os.path.join(SYMDIR, "reentrancy")
 racket_tod_executable = os.path.join(SYMDIR, "tod")
 racket_tod_executable_comp = os.path.join(SYMDIR, "tod-complement")
