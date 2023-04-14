@@ -126,12 +126,15 @@ class IRTranslator(object):
 	# also there are some misuse of those operators
 	# so here we unify ":="/"="/"->" all to "="
 	def _t_unify_assignment(self, json_obj):
+		replacement_dict = { " := ": " = ", " -> ": " = " , "ENTRY_POINT": "ENTRY_POINT None", "END_IF": "END_IF None", "(bool)": "", "(uint256)": "", "(None)": "", " 0 ": " ! "}
 		for b in ["global_blocks", "range_blocks", "normal_blocks"]:
 			for i in range(len(json_obj[b])):
 				dblk = json_obj[b][i]
 				for j in range(len(dblk["instructions"])):
-					dblk["instructions"][j] = dblk["instructions"][j].replace(" := ", " = ")
-					dblk["instructions"][j] = dblk["instructions"][j].replace(" -> ", " = ")
+					# replace regex \s\(->([a-zA-Z_][a-zA-Z0-9_]*)\) to empty string
+					dblk["instructions"][j] = re.sub(r"\s\(->([a-zA-Z_][a-zA-Z0-9_]*)\)", "", dblk["instructions"][j])
+					for k in replacement_dict.keys():
+						dblk["instructions"][j] = dblk["instructions"][j].replace(k, replacement_dict[k])
 
 	# ref: https://solidity.readthedocs.io/en/v0.5.3/types.html
 	# treat string type as unknown type 
@@ -196,17 +199,17 @@ class IRTranslator(object):
 			for i in range(len(json_obj[b])):
 				dblk = json_obj[b][i]
 				for j in range(len(dblk["instructions"])):
-					if "ENTRY_POINT " in dblk["instructions"][j]:
+					if "ENTRY_POINT" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "BEGIN_LOOP " in dblk["instructions"][j]:
+					if "BEGIN_LOOP" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "END_LOOP " in dblk["instructions"][j]:
+					if "END_LOOP" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "END_IF " in dblk["instructions"][j]:
+					if "END_IF" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "Emit " in dblk["instructions"][j]:
+					if "Emit" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "RETURN " in dblk["instructions"][j]:
+					if "RETURN" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
 					if "NEW VARIABLE None" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
@@ -214,17 +217,17 @@ class IRTranslator(object):
 						dblk["instructions"][j] = "NOP"
 					if "DESTINATION" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "PUSH " in dblk["instructions"][j]:
+					if "PUSH" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "EXPRESSION " in dblk["instructions"][j]:
+					if "EXPRESSION" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
 					if "selfdestruct(" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
 					if "SOLIDITY_CALL revert(" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "THROW " in dblk["instructions"][j]:
+					if "THROW" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
-					if "INLINE " in dblk["instructions"][j]:
+					if "INLINE" in dblk["instructions"][j]:
 						dblk["instructions"][j] = "NOP"
 
 	# split a block that contains `require` into 3 blocks
