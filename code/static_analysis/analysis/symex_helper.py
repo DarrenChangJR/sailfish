@@ -997,7 +997,7 @@ def output_tod_amount_or_receiver_paths(slither_obj, file_n, result_dir, log, gl
 
         locals_undeclared = []
 
-        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == 0x0 and node._is_root == True:
+        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == NodeType.ENTRYPOINT and node._is_root == True:
             if path_graph.nodes[node]['function_type'] == 'P':
                 locals_undeclared = ICFG.locals_to_declare[primary_function]
 
@@ -1219,7 +1219,7 @@ def output_tod_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
 
         locals_undeclared = []
 
-        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == 0x0 and node._is_root == True:
+        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == NodeType.ENTRYPOINT and node._is_root == True:
             if path_graph.nodes[node]['function_type'] == 'P':
                 locals_undeclared = ICFG.locals_to_declare[primary_function]
 
