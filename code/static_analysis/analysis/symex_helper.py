@@ -500,7 +500,6 @@ def get_type_information(s_var, log):
             type_info.append("integer")
 
         else:
-            print(type(var_type.type))
             log.warning("Other types of variable in symex helper")
             sys.exit(1)
 
@@ -1467,8 +1466,7 @@ def output_dao_paths(slither_obj, file_n, result_dir, log, global_vars, global_c
 
 
         locals_undeclared = []
-
-        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == 0x0 and node._is_root == True:
+        if type(node._instructions[-1]).__name__ == 'Node' and node._instructions[-1].type == NodeType.ENTRYPOINT and node._is_root == True:
             if path_graph.nodes[node]['function_type'] == 'P':
                 locals_undeclared = ICFG.locals_to_declare[primary_function]
 
