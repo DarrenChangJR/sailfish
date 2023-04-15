@@ -1,0 +1,1 @@
+from contractlint import analyze_contracts
