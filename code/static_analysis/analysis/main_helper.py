@@ -468,7 +468,7 @@ def get_state_var_obj(state_variables):
  --------------------------------------------------
 '''
 
-def check_for_tainted_call(sdg_objects, generated_sdg, owner_only_modifiers, call_instr, destination_function):
+def check_for_tainted_call(slither_obj, sdg_objects, generated_sdg, owner_only_modifiers, call_instr, destination_function):
     for function in sdg_objects.keys():
         if destination_function.name == function.name and sdg_objects[function]._is_ext_call is True \
             and len(call_instr.arguments) == len(function.parameters):
@@ -476,7 +476,8 @@ def check_for_tainted_call(sdg_objects, generated_sdg, owner_only_modifiers, cal
             # for actual_parameter in call_instr.arguments:
             #     position = call_instr.arguments.index(actual_parameter)
             #     if not slither.analyses.data_dependency.data_dependency.is_tainted(actual_parameter, call_instr.node.function):
-            #         function.slither.context['DATA_DEPENDENCY_INPUT'].remove(function.parameters[position])
+            #         print(slither_obj.context)
+            #         function.context['DATA_DEPENDENCY_INPUT'].remove(function.parameters[position])
 
             for ext_call in sdg_objects[function]._ext_calls.keys():
                 if slither.analyses.data_dependency.data_dependency.is_tainted(ext_call.destination, function.contract):
@@ -506,7 +507,7 @@ def do_inter_contract_analysis(contract_path, call_instr, destination_function, 
     log.info('Storage dependency graph generation started!')
     generated_sdg, sdg_objects, owner_only_modifiers = generate_sdg(slither_obj, generated_icfg, result_dir, False, log)
     log.info('Storage dependency graph generation finished!')
-    is_ext_tainted = check_for_tainted_call(sdg_objects, generated_sdg, owner_only_modifiers, call_instr, destination_function)
+    is_ext_tainted = check_for_tainted_call(slither_obj, sdg_objects, generated_sdg, owner_only_modifiers, call_instr, destination_function)
     return is_ext_tainted, sdg_objects
 
 
