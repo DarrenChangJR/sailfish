@@ -224,18 +224,8 @@ if __name__ == "__main__":
             contract_name = os.path.basename(contract_path)
             contracts_to_be_analyzed.append((contract_path, patterns, args.output, args.range, dump_graph, only_static, call_heuristic, icc, args.mappingfpath,
                                              args.solver, args.solc_path))
+            analyze_contracts(*contracts_to_be_analyzed[-1])
     else:
         contract_path = contracts[0]
-
-
-    # Analyze the contracts using mutiprocessing pool if number of contracts
-    # is more than one
-    if len(contracts) > 1:
-        with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
-            pool.starmap(analyze_contracts, contracts_to_be_analyzed)
-        
-        pool.join()
-    
-    else:
         analyze_contracts(contract_path, patterns, args.output, args.range, dump_graph, only_static, call_heuristic, icc, args.mappingfpath,
                           args.solver, args.solc_path)
