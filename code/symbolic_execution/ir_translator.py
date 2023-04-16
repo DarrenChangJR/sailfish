@@ -260,7 +260,7 @@ class IRTranslator(object):
 						hasRequire = True
 
 						# extract the required variables
-						exv = re.search(r"SOLIDITY_CALL require\(.*?\)\((.*?)\)", json_obj[block_type][i]["instructions"][j]).groups()
+						exv = re.search(r"SOLIDITY_CALL require\((.*?)\)", json_obj[block_type][i]["instructions"][j]).groups()
 						assert len(exv)==1, "_t_require_split: require match failed, original string: {}".format(json_obj[block_type][i]["instructions"][j])
 
 						new_block_addr = "{}_r{}".format(addr_template, block_ptr)
@@ -275,7 +275,7 @@ class IRTranslator(object):
 						hasRequire = True
 
 						# extract the required variables
-						exv = re.search(r"SOLIDITY_CALL assert\(.*?\)\((.*?)\)", json_obj[block_type][i]["instructions"][j]).groups()
+						exv = re.search(r"SOLIDITY_CALL assert\((.*?)\)", json_obj[block_type][i]["instructions"][j]).groups()
 						assert len(exv)==1, "_t_require_split: require match failed, original string: {}".format(json_obj[block_type][i]["instructions"][j])
 
 						new_block_addr = "{}_r{}".format(addr_template, block_ptr)
