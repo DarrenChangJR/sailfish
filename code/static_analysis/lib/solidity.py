@@ -68,14 +68,6 @@ def parse_solc_version_string(solc_version_string):
 def get_available_solc_versions():
     global AVAILABLE_SOLC_VERSIONS
 
-    # solc versions installed by solc-select (shell script version)
-    solc_select_path = os.path.expanduser('~/.solc-select')
-    if os.path.isdir(solc_select_path):
-        solc_select_version_regex = os.path.join(solc_select_path, 'usr/bin/solc-v*')
-        for solc_path in glob.glob(solc_select_version_regex):
-            solc_version = solc_path.split('/')[-1].replace('solc-', '')
-            AVAILABLE_SOLC_VERSION_PATHS[solc_version] = solc_path
-
     # solc versions installed by solc-select (pip version)
     solc_select_path = os.path.expanduser('~/.solc-select/artifacts')
     if os.path.isdir(solc_select_path):
