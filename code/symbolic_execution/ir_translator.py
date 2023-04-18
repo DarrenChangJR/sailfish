@@ -132,7 +132,7 @@ class IRTranslator(object):
 				dblk = json_obj[b][i]
 				for j in range(len(dblk["instructions"])):
 					# replace regex \s\(->([a-zA-Z_][a-zA-Z0-9_]*)\) to empty string
-					dblk["instructions"][j] = re.sub(r"\s\(->([a-zA-Z_][a-zA-Z0-9_]*)\)", "", dblk["instructions"][j])
+					dblk["instructions"][j] = re.sub(r"\s*\(->\s*([a-zA-Z_][a-zA-Z0-9_]*)\)", "", dblk["instructions"][j])
 					for k in replacement_dict.keys():
 						dblk["instructions"][j] = dblk["instructions"][j].replace(k, replacement_dict[k])
 
