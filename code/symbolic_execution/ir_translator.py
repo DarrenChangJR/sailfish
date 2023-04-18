@@ -126,7 +126,7 @@ class IRTranslator(object):
 	# also there are some misuse of those operators
 	# so here we unify ":="/"="/"->" all to "="
 	def _t_unify_assignment(self, json_obj):
-		replacement_dict = { " := ": " = ", " -> ": " = " , "ENTRY_POINT": "ENTRY_POINT None", "END_IF": "END_IF None", "(bool)": "", "(uint256)": "", "(None)": "", " 0 ": " ! "}
+		replacement_dict = { " := ": " = ", " -> ": " = " , "ENTRY_POINT": "ENTRY_POINT None", "END_IF": "END_IF None", "(bool)": "", "(uint256)": "", "(None)": "", " 0 ": " ! ", "(address)": ""}
 		for b in ["global_blocks", "range_blocks", "normal_blocks"]:
 			for i in range(len(json_obj[b])):
 				dblk = json_obj[b][i]
