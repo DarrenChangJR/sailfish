@@ -59,7 +59,7 @@ class Compose:
         self.build_composed_sdg(self._sdg, self._sdg_obj, self._sdg_objects)
 
         count = 1
-        if self._dump_graph == True and self.dao is True:
+        if self._dump_graph == True and self.dao is True and self._dao_composed_sdgs is not None:
             for function_1 in self._dao_composed_sdgs.keys():
                 for function_2 in self._dao_composed_sdgs[function_1].keys():
                     composed_sdg_list = self._dao_composed_sdgs[function_1][function_2]
@@ -71,7 +71,7 @@ class Compose:
                         count = count + 1
 
         count = 1
-        if self._dump_graph is True and self.tod is True:
+        if self._dump_graph is True and self.tod is True and self._tod_composed_sdgs is not None:
             for function_1 in self._tod_composed_sdgs.keys():
                 for function_2 in self._tod_composed_sdgs[function_1].keys():
                     composed_sdg_list = self._tod_composed_sdgs[function_1][function_2]
